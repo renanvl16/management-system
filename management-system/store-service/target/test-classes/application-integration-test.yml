@@ -1,0 +1,82 @@
+# Configuração para testes integrados com TestContainers
+# Este arquivo é carregado automaticamente quando o perfil 'integration-test' está ativo
+
+server:
+  port: 0  # Porta dinâmica para evitar conflitos
+
+spring:
+  application:
+    name: store-service-integration-test
+  
+  # JPA Configuration
+  jpa:
+    hibernate:
+      ddl-auto: create-drop  # Recriar schema a cada teste
+    show-sql: false
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    properties:
+      hibernate:
+        format_sql: false
+        jdbc:
+          time_zone: UTC
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+  
+  # Configurações específicas para testes
+  test:
+    database:
+      replace: none  # Não substituir DataSource configurado pelos TestContainers
+
+# Logging configuration for tests
+logging:
+  level:
+    root: INFO
+    com.inventory.management: DEBUG
+    org.springframework.kafka: INFO
+    org.apache.kafka: WARN
+    org.testcontainers: INFO
+    com.github.dockerjava: WARN
+    org.springframework.boot.test: INFO
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+  pattern:
+    console: "%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+
+# Management endpoints para monitoramento durante testes
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+
+# Configurações da aplicação específicas para teste
+app:
+  store-id: STORE_TEST_001
+  cache:
+    enabled: true
+    ttl: 300  # 5 minutos em testes
+  kafka:
+    enabled: true
+    topics:
+      inventory-updates: test-inventory-updates
+      reservation-events: test-reservation-events
+  monitoring:
+    enabled: true
+    
+# Configurações de timeout para estabilidade em CI/CD
+testcontainers:
+  startup-timeout: 120s
+  connect-timeout: 60s
+  read-timeout: 60s
+
+# Configurações específicas de teste
+test:
+  integration:
+    cleanup-after-test: true
+    wait-for-containers: 10s
+    max-retries: 3
+    container:
+      reuse: true  # Reutilizar containers para melhor performance

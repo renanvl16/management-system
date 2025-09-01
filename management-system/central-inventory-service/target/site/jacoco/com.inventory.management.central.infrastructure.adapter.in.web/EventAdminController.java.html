@@ -1,0 +1,258 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>EventAdminController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Central Inventory Service</a> &gt; <a href="index.source.html" class="el_package">com.inventory.management.central.infrastructure.adapter.in.web</a> &gt; <span class="el_source">EventAdminController.java</span></div><h1>EventAdminController.java</h1><pre class="source lang-java linenums">package com.inventory.management.central.infrastructure.adapter.in.web;
+
+import com.inventory.management.central.domain.model.InventoryEvent;
+import com.inventory.management.central.domain.port.InventoryEventRepository;
+import com.inventory.management.central.domain.service.InventoryEventProcessingService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
+/**
+ * Controlador para administração de eventos de inventário.
+ * 
+ * Fornece endpoints para visualizar, reprocessar e administrar
+ * eventos de inventário recebidos via Kafka.
+ * 
+ * @author Sistema de Gerenciamento de Inventário
+ * @version 1.0.0
+ * @since 1.0.0
+ */
+@RestController
+@RequestMapping(&quot;/api/v1/admin/events&quot;)
+<span class="fc" id="L34">@RequiredArgsConstructor</span>
+<span class="fc" id="L35">@Slf4j</span>
+@Tag(name = &quot;Event Administration&quot;, description = &quot;Administração de eventos de inventário&quot;)
+public class EventAdminController {
+    
+    private static final String TIMESTAMP_KEY = &quot;timestamp&quot;;
+    
+    private final InventoryEventRepository eventRepository;
+    private final InventoryEventProcessingService eventProcessingService;
+    
+    /**
+     * Lista todos os eventos de inventário.
+     */
+    @GetMapping
+    @Operation(summary = &quot;Listar eventos&quot;, 
+               description = &quot;Lista todos os eventos de inventário ordenados por timestamp&quot;)
+    @ApiResponse(responseCode = &quot;200&quot;, description = &quot;Lista de eventos retornada&quot;)
+    public ResponseEntity&lt;List&lt;InventoryEvent&gt;&gt; getAllEvents(
+            @Parameter(description = &quot;Status de processamento para filtro&quot;)
+            @RequestParam(required = false) InventoryEvent.ProcessingStatus status) {
+        
+<span class="fc" id="L55">        log.info(&quot;📋 Listando eventos: status={}&quot;, status);</span>
+        
+<span class="fc bfc" id="L57" title="All 2 branches covered.">        List&lt;InventoryEvent&gt; events = status != null </span>
+<span class="fc" id="L58">                ? eventRepository.findByProcessingStatus(status)</span>
+<span class="fc" id="L59">                : eventRepository.findAllOrderByTimestamp();</span>
+        
+<span class="fc" id="L61">        return ResponseEntity.ok(events);</span>
+    }
+    
+    /**
+     * Busca evento por ID.
+     */
+    @GetMapping(&quot;/{eventId}&quot;)
+    @Operation(summary = &quot;Buscar evento por ID&quot;, 
+               description = &quot;Retorna detalhes de um evento específico&quot;)
+    @ApiResponses({
+        @ApiResponse(responseCode = &quot;200&quot;, description = &quot;Evento encontrado&quot;),
+        @ApiResponse(responseCode = &quot;404&quot;, description = &quot;Evento não encontrado&quot;)
+    })
+    public ResponseEntity&lt;InventoryEvent&gt; getEventById(
+            @Parameter(description = &quot;ID do evento&quot;, required = true)
+            @PathVariable UUID eventId) {
+        
+<span class="fc" id="L78">        log.info(&quot;🔍 Buscando evento: eventId={}&quot;, eventId);</span>
+        
+<span class="fc" id="L80">        return eventRepository.findByEventId(eventId)</span>
+<span class="fc" id="L81">                             .map(ResponseEntity::ok)</span>
+<span class="fc" id="L82">                             .orElse(ResponseEntity.notFound().build());</span>
+    }
+    
+    /**
+     * Lista eventos pendentes de processamento.
+     */
+    @GetMapping(&quot;/pending&quot;)
+    @Operation(summary = &quot;Listar eventos pendentes&quot;, 
+               description = &quot;Retorna eventos que ainda não foram processados&quot;)
+    @ApiResponse(responseCode = &quot;200&quot;, description = &quot;Lista de eventos pendentes&quot;)
+    public ResponseEntity&lt;List&lt;InventoryEvent&gt;&gt; getPendingEvents() {
+        
+<span class="fc" id="L94">        log.info(&quot;⏳ Listando eventos pendentes&quot;);</span>
+        
+<span class="fc" id="L96">        List&lt;InventoryEvent&gt; events = eventRepository.findPendingEvents();</span>
+        
+<span class="fc" id="L98">        return ResponseEntity.ok(events);</span>
+    }
+    
+    /**
+     * Lista eventos que falharam no processamento.
+     */
+    @GetMapping(&quot;/failed&quot;)
+    @Operation(summary = &quot;Listar eventos com falha&quot;, 
+               description = &quot;Retorna eventos que falharam no processamento&quot;)
+    @ApiResponse(responseCode = &quot;200&quot;, description = &quot;Lista de eventos com falha&quot;)
+    public ResponseEntity&lt;List&lt;InventoryEvent&gt;&gt; getFailedEvents() {
+        
+<span class="fc" id="L110">        log.info(&quot;❌ Listando eventos com falha&quot;);</span>
+        
+<span class="fc" id="L112">        List&lt;InventoryEvent&gt; events = eventRepository.findFailedEvents();</span>
+        
+<span class="fc" id="L114">        return ResponseEntity.ok(events);</span>
+    }
+    
+    /**
+     * Lista eventos por produto.
+     */
+    @GetMapping(&quot;/product/{productSku}&quot;)
+    @Operation(summary = &quot;Listar eventos por produto&quot;, 
+               description = &quot;Retorna todos os eventos de um produto específico&quot;)
+    @ApiResponse(responseCode = &quot;200&quot;, description = &quot;Lista de eventos do produto&quot;)
+    public ResponseEntity&lt;List&lt;InventoryEvent&gt;&gt; getEventsByProduct(
+            @Parameter(description = &quot;SKU do produto&quot;, required = true)
+            @PathVariable String productSku) {
+        
+<span class="fc" id="L128">        log.info(&quot;🔍 Listando eventos por produto: productSku={}&quot;, productSku);</span>
+        
+<span class="fc" id="L130">        List&lt;InventoryEvent&gt; events = eventRepository.findByProductSku(productSku);</span>
+        
+<span class="fc" id="L132">        return ResponseEntity.ok(events);</span>
+    }
+    
+    /**
+     * Lista eventos por loja.
+     */
+    @GetMapping(&quot;/store/{storeId}&quot;)
+    @Operation(summary = &quot;Listar eventos por loja&quot;, 
+               description = &quot;Retorna todos os eventos de uma loja específica&quot;)
+    @ApiResponse(responseCode = &quot;200&quot;, description = &quot;Lista de eventos da loja&quot;)
+    public ResponseEntity&lt;List&lt;InventoryEvent&gt;&gt; getEventsByStore(
+            @Parameter(description = &quot;ID da loja&quot;, required = true)
+            @PathVariable String storeId) {
+        
+<span class="fc" id="L146">        log.info(&quot;🔍 Listando eventos por loja: storeId={}&quot;, storeId);</span>
+        
+<span class="fc" id="L148">        List&lt;InventoryEvent&gt; events = eventRepository.findByStoreId(storeId);</span>
+        
+<span class="fc" id="L150">        return ResponseEntity.ok(events);</span>
+    }
+    
+    /**
+     * Lista eventos em um período específico.
+     */
+    @GetMapping(&quot;/period&quot;)
+    @Operation(summary = &quot;Listar eventos por período&quot;, 
+               description = &quot;Retorna eventos em um período específico&quot;)
+    @ApiResponse(responseCode = &quot;200&quot;, description = &quot;Lista de eventos no período&quot;)
+    public ResponseEntity&lt;List&lt;InventoryEvent&gt;&gt; getEventsByPeriod(
+            @Parameter(description = &quot;Data/hora de início&quot;)
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startTime,
+            @Parameter(description = &quot;Data/hora de fim&quot;)
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endTime) {
+        
+<span class="fc" id="L166">        log.info(&quot;🔍 Listando eventos por período: {} até {}&quot;, startTime, endTime);</span>
+        
+<span class="fc" id="L168">        List&lt;InventoryEvent&gt; events = eventRepository.findByTimestampBetween(startTime, endTime);</span>
+        
+<span class="fc" id="L170">        return ResponseEntity.ok(events);</span>
+    }
+    
+    /**
+     * Reprocessa eventos que falharam.
+     */
+    @PostMapping(&quot;/reprocess-failed&quot;)
+    @Operation(summary = &quot;Reprocessar eventos com falha&quot;, 
+               description = &quot;Tenta reprocessar todos os eventos que falharam&quot;)
+    @ApiResponse(responseCode = &quot;200&quot;, description = &quot;Reprocessamento iniciado&quot;)
+    public ResponseEntity&lt;Map&lt;String, Object&gt;&gt; reprocessFailedEvents() {
+        
+<span class="fc" id="L182">        log.info(&quot;🔄 Iniciando reprocessamento de eventos com falha&quot;);</span>
+        
+<span class="fc" id="L184">        int reprocessedCount = eventProcessingService.reprocessFailedEvents();</span>
+        
+<span class="fc" id="L186">        Map&lt;String, Object&gt; response = Map.of(</span>
+                &quot;message&quot;, &quot;Reprocessamento concluído&quot;,
+<span class="fc" id="L188">                &quot;reprocessedCount&quot;, reprocessedCount,</span>
+<span class="fc" id="L189">                TIMESTAMP_KEY, LocalDateTime.now()</span>
+        );
+        
+<span class="fc" id="L192">        return ResponseEntity.ok(response);</span>
+    }
+    
+    /**
+     * Estatísticas de eventos.
+     */
+    @GetMapping(&quot;/stats&quot;)
+    @Operation(summary = &quot;Estatísticas de eventos&quot;, 
+               description = &quot;Retorna estatísticas gerais dos eventos&quot;)
+    @ApiResponse(responseCode = &quot;200&quot;, description = &quot;Estatísticas retornadas&quot;)
+    public ResponseEntity&lt;Map&lt;String, Object&gt;&gt; getEventStats() {
+        
+<span class="fc" id="L204">        log.info(&quot;📊 Consultando estatísticas de eventos&quot;);</span>
+        
+<span class="fc" id="L206">        LocalDateTime last24Hours = LocalDateTime.now().minusHours(24);</span>
+<span class="fc" id="L207">        LocalDateTime lastWeek = LocalDateTime.now().minusDays(7);</span>
+        
+<span class="fc" id="L209">        long pendingCount = eventRepository.findPendingEvents().size();</span>
+<span class="fc" id="L210">        long failedCount = eventRepository.findFailedEvents().size();</span>
+<span class="fc" id="L211">        long processedCount = eventRepository.findProcessedEvents().size();</span>
+        
+<span class="fc" id="L213">        List&lt;InventoryEvent&gt; last24HoursEvents = eventRepository.findByTimestampBetween(</span>
+<span class="fc" id="L214">                last24Hours, LocalDateTime.now());</span>
+        
+<span class="fc" id="L216">        List&lt;InventoryEvent&gt; lastWeekEvents = eventRepository.findByTimestampBetween(</span>
+<span class="fc" id="L217">                lastWeek, LocalDateTime.now());</span>
+        
+<span class="fc" id="L219">        Map&lt;String, Object&gt; stats = Map.of(</span>
+<span class="fc" id="L220">                &quot;pending&quot;, pendingCount,</span>
+<span class="fc" id="L221">                &quot;failed&quot;, failedCount,</span>
+<span class="fc" id="L222">                &quot;processed&quot;, processedCount,</span>
+<span class="fc" id="L223">                &quot;total&quot;, pendingCount + failedCount + processedCount,</span>
+<span class="fc" id="L224">                &quot;last24Hours&quot;, last24HoursEvents.size(),</span>
+<span class="fc" id="L225">                &quot;lastWeek&quot;, lastWeekEvents.size(),</span>
+<span class="fc" id="L226">                TIMESTAMP_KEY, LocalDateTime.now()</span>
+        );
+        
+<span class="fc" id="L229">        return ResponseEntity.ok(stats);</span>
+    }
+    
+    /**
+     * Remove eventos antigos.
+     */
+    @DeleteMapping(&quot;/cleanup&quot;)
+    @Operation(summary = &quot;Limpar eventos antigos&quot;, 
+               description = &quot;Remove eventos mais antigos que o período especificado&quot;)
+    @ApiResponse(responseCode = &quot;200&quot;, description = &quot;Limpeza realizada&quot;)
+    public ResponseEntity&lt;Map&lt;String, Object&gt;&gt; cleanupOldEvents(
+            @Parameter(description = &quot;Número de dias para manter (padrão: 30)&quot;)
+            @RequestParam(defaultValue = &quot;30&quot;) Integer days) {
+        
+<span class="fc" id="L243">        log.info(&quot;🗑️  Iniciando limpeza de eventos antigos: {} dias&quot;, days);</span>
+        
+<span class="fc" id="L245">        LocalDateTime cutoffDate = LocalDateTime.now().minusDays(days);</span>
+<span class="fc" id="L246">        Long deletedCount = eventRepository.deleteByTimestampBefore(cutoffDate);</span>
+        
+<span class="fc" id="L248">        Map&lt;String, Object&gt; response = Map.of(</span>
+                &quot;message&quot;, &quot;Limpeza concluída&quot;,
+                &quot;deletedCount&quot;, deletedCount,
+                &quot;cutoffDate&quot;, cutoffDate,
+<span class="fc" id="L252">                TIMESTAMP_KEY, LocalDateTime.now()</span>
+        );
+        
+<span class="fc" id="L255">        return ResponseEntity.ok(response);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

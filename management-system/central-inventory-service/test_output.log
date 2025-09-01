@@ -1,0 +1,132 @@
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] ---------< com.inventory.management:central-inventory-service >---------
+[INFO] Building Central Inventory Service 1.0.0
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- jacoco:0.8.11:prepare-agent (default) @ central-inventory-service ---
+[INFO] argLine set to -javaagent:/Users/renan.lima/.m2/repository/org/jacoco/org.jacoco.agent/0.8.11/org.jacoco.agent-0.8.11-runtime.jar=destfile=/Users/renan.lima/Documents/management-system/central-inventory-service/target/jacoco.exec
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ central-inventory-service ---
+[INFO] Copying 3 resources from src/main/resources to target/classes
+[INFO] Copying 1 resource from src/main/resources to target/classes
+[INFO] 
+[INFO] --- compiler:3.11.0:compile (default-compile) @ central-inventory-service ---
+[INFO] Nothing to compile - all classes are up to date
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ central-inventory-service ---
+[INFO] Copying 1 resource from src/test/resources to target/test-classes
+[INFO] 
+[INFO] --- compiler:3.11.0:testCompile (default-testCompile) @ central-inventory-service ---
+[INFO] Nothing to compile - all classes are up to date
+[INFO] 
+[INFO] --- surefire:3.2.2:test (default-test) @ central-inventory-service ---
+[WARNING]  Parameter 'systemProperties' is deprecated: Use systemPropertyVariables instead.
+[INFO] Using auto detected provider org.apache.maven.surefire.junitplatform.JUnitPlatformProvider
+[INFO] 
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+[INFO] Running com.inventory.management.central.infrastructure.adapter.in.web.EventAdminControllerAdditionalTest
+16:09:36.417 [main] INFO org.springframework.test.context.support.AnnotationConfigContextLoaderUtils -- Could not detect default configuration classes for test class [com.inventory.management.central.infrastructure.adapter.in.web.EventAdminControllerAdditionalTest]: EventAdminControllerAdditionalTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+16:09:36.625 [main] INFO org.springframework.boot.test.context.SpringBootTestContextBootstrapper -- Found @SpringBootConfiguration com.inventory.management.central.CentralInventoryServiceApplication for test class com.inventory.management.central.infrastructure.adapter.in.web.EventAdminControllerAdditionalTest
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+ :: Spring Boot ::                (v3.2.0)
+
+16:09:37.149 [main] INFO  c.i.m.c.i.a.i.w.EventAdminControllerAdditionalTest - Starting EventAdminControllerAdditionalTest using Java 21.0.4 with PID 46967 (started by renan.lima in /Users/renan.lima/Documents/management-system/central-inventory-service)
+16:09:37.149 [main] DEBUG c.i.m.c.i.a.i.w.EventAdminControllerAdditionalTest - Running with Spring Boot v3.2.0, Spring v6.1.1
+16:09:37.150 [main] INFO  c.i.m.c.i.a.i.w.EventAdminControllerAdditionalTest - The following 1 profile is active: "test"
+WARNING: A Java agent has been loaded dynamically (/Users/renan.lima/.m2/repository/net/bytebuddy/byte-buddy-agent/1.14.10/byte-buddy-agent-1.14.10.jar)
+WARNING: If a serviceability tool is in use, please run with -XX:+EnableDynamicAgentLoading to hide this warning
+WARNING: If a serviceability tool is not in use, please run with -Djdk.instrument.traceUsage for more information
+WARNING: Dynamic loading of agents will be disallowed by default in a future release
+16:09:40.935 [main] INFO  o.s.b.t.m.w.SpringBootMockServletContext - Initializing Spring TestDispatcherServlet ''
+16:09:40.936 [main] INFO  o.s.t.w.s.TestDispatcherServlet - Initializing Servlet ''
+16:09:40.938 [main] INFO  o.s.t.w.s.TestDispatcherServlet - Completed initialization in 1 ms
+16:09:40.970 [main] INFO  c.i.m.c.i.a.i.w.EventAdminControllerAdditionalTest - Started EventAdminControllerAdditionalTest in 4.273 seconds (process running for 6.004)
+16:09:41.172 [main] WARN  o.s.w.s.m.s.DefaultHandlerExceptionResolver - Resolved [org.springframework.web.bind.MissingServletRequestParameterException: Required request parameter 'startTime' for method parameter type LocalDateTime is not present]
+16:09:41.223 [main] INFO  c.i.m.c.i.a.i.w.EventAdminController - 🔄 Iniciando reprocessamento de eventos com falha
+16:09:41.247 [main] INFO  c.i.m.c.i.a.i.w.EventAdminController - 🔄 Iniciando reprocessamento de eventos com falha
+16:09:41.399 [main] INFO  c.i.m.c.i.a.i.w.EventAdminController - 🗑️  Iniciando limpeza de eventos antigos: 30 dias
+16:09:41.419 [main] INFO  c.i.m.c.i.a.i.w.EventAdminController - 🔍 Listando eventos por loja: storeId=STORE-001
+16:09:41.487 [main] INFO  c.i.m.c.i.a.i.w.EventAdminController - 🔍 Listando eventos por período: 2025-08-31T16:09:41.480298 até 2025-09-01T16:09:41.480312
+16:09:41.496 [main] INFO  c.i.m.c.i.a.i.w.EventAdminController - ❌ Listando eventos com falha
+16:09:41.502 [main] INFO  c.i.m.c.i.a.i.w.EventAdminController - 📊 Consultando estatísticas de eventos
+16:09:41.509 [main] INFO  c.i.m.c.i.a.i.w.EventAdminController - 🔍 Listando eventos por produto: productSku=TEST-001
+16:09:41.518 [main] INFO  c.i.m.c.i.a.i.w.EventAdminController - 🗑️  Iniciando limpeza de eventos antigos: 0 dias
+[ERROR] Tests run: 10, Failures: 0, Errors: 1, Skipped: 0, Time elapsed: 5.223 s <<< FAILURE! -- in com.inventory.management.central.infrastructure.adapter.in.web.EventAdminControllerAdditionalTest
+[ERROR] com.inventory.management.central.infrastructure.adapter.in.web.EventAdminControllerAdditionalTest.reprocessFailedEvents_WithError_ShouldReturnErrorResponse -- Time elapsed: 0.040 s <<< ERROR!
+jakarta.servlet.ServletException: Request processing failed: java.lang.RuntimeException: Database connection failed
+	at org.springframework.web.servlet.FrameworkServlet.processRequest(FrameworkServlet.java:1022)
+	at org.springframework.web.servlet.FrameworkServlet.doPost(FrameworkServlet.java:914)
+	at jakarta.servlet.http.HttpServlet.service(HttpServlet.java:590)
+	at org.springframework.web.servlet.FrameworkServlet.service(FrameworkServlet.java:885)
+	at org.springframework.test.web.servlet.TestDispatcherServlet.service(TestDispatcherServlet.java:72)
+	at jakarta.servlet.http.HttpServlet.service(HttpServlet.java:658)
+	at org.springframework.mock.web.MockFilterChain$ServletFilterProxy.doFilter(MockFilterChain.java:165)
+	at org.springframework.mock.web.MockFilterChain.doFilter(MockFilterChain.java:132)
+	at org.springframework.web.filter.RequestContextFilter.doFilterInternal(RequestContextFilter.java:100)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.springframework.test.web.servlet.setup.MockMvcFilterDecorator.doFilter(MockMvcFilterDecorator.java:151)
+	at org.springframework.mock.web.MockFilterChain.doFilter(MockFilterChain.java:132)
+	at org.springframework.web.filter.FormContentFilter.doFilterInternal(FormContentFilter.java:93)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.springframework.test.web.servlet.setup.MockMvcFilterDecorator.doFilter(MockMvcFilterDecorator.java:151)
+	at org.springframework.mock.web.MockFilterChain.doFilter(MockFilterChain.java:132)
+	at org.springframework.web.filter.CharacterEncodingFilter.doFilterInternal(CharacterEncodingFilter.java:201)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.springframework.test.web.servlet.setup.MockMvcFilterDecorator.doFilter(MockMvcFilterDecorator.java:151)
+	at org.springframework.mock.web.MockFilterChain.doFilter(MockFilterChain.java:132)
+	at org.springframework.test.web.servlet.MockMvc.perform(MockMvc.java:201)
+	at com.inventory.management.central.infrastructure.adapter.in.web.EventAdminControllerAdditionalTest.reprocessFailedEvents_WithError_ShouldReturnErrorResponse(EventAdminControllerAdditionalTest.java:195)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+Caused by: java.lang.RuntimeException: Database connection failed
+	at com.inventory.management.central.domain.service.InventoryEventProcessingService.reprocessFailedEvents(InventoryEventProcessingService.java:263)
+	at com.inventory.management.central.infrastructure.adapter.in.web.EventAdminController.reprocessFailedEvents(EventAdminController.java:184)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at org.springframework.web.method.support.InvocableHandlerMethod.doInvoke(InvocableHandlerMethod.java:254)
+	at org.springframework.web.method.support.InvocableHandlerMethod.invokeForRequest(InvocableHandlerMethod.java:182)
+	at org.springframework.web.servlet.mvc.method.annotation.ServletInvocableHandlerMethod.invokeAndHandle(ServletInvocableHandlerMethod.java:118)
+	at org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter.invokeHandlerMethod(RequestMappingHandlerAdapter.java:917)
+	at org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter.handleInternal(RequestMappingHandlerAdapter.java:829)
+	at org.springframework.web.servlet.mvc.method.AbstractHandlerMethodAdapter.handle(AbstractHandlerMethodAdapter.java:87)
+	at org.springframework.web.servlet.DispatcherServlet.doDispatch(DispatcherServlet.java:1089)
+	at org.springframework.web.servlet.DispatcherServlet.doService(DispatcherServlet.java:979)
+	at org.springframework.web.servlet.FrameworkServlet.processRequest(FrameworkServlet.java:1014)
+	... 24 more
+
+[INFO] 
+[INFO] Results:
+[INFO] 
+[ERROR] Errors: 
+[ERROR]   EventAdminControllerAdditionalTest.reprocessFailedEvents_WithError_ShouldReturnErrorResponse:195 » Servlet Request processing failed: java.lang.RuntimeException: Database connection failed
+[INFO] 
+[ERROR] Tests run: 10, Failures: 0, Errors: 1, Skipped: 0
+[INFO] 
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD FAILURE
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  9.788 s
+[INFO] Finished at: 2025-09-01T16:09:41-03:00
+[INFO] ------------------------------------------------------------------------
+[ERROR] Failed to execute goal org.apache.maven.plugins:maven-surefire-plugin:3.2.2:test (default-test) on project central-inventory-service: 
+[ERROR] 
+[ERROR] Please refer to /Users/renan.lima/Documents/management-system/central-inventory-service/target/surefire-reports for the individual test results.
+[ERROR] Please refer to dump files (if any exist) [date].dump, [date]-jvmRun[N].dump and [date].dumpstream.
+[ERROR] -> [Help 1]
+[ERROR] 
+[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+[ERROR] Re-run Maven using the -X switch to enable full debug logging.
+[ERROR] 
+[ERROR] For more information about the errors and possible solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoFailureException

@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>InventoryEventJpaEntity.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Central Inventory Service</a> &gt; <a href="index.source.html" class="el_package">com.inventory.management.central.infrastructure.adapter.out.persistence</a> &gt; <span class="el_source">InventoryEventJpaEntity.java</span></div><h1>InventoryEventJpaEntity.java</h1><pre class="source lang-java linenums">package com.inventory.management.central.infrastructure.adapter.out.persistence;
+
+import jakarta.persistence.*;
+import org.hibernate.annotations.GenericGenerator;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+import java.time.LocalDateTime;
+import java.util.UUID;
+
+/**
+ * Entidade JPA para eventos de inventário.
+ * 
+ * @author Sistema de Gerenciamento de Inventário
+ * @version 1.0.0
+ * @since 1.0.0
+ */
+@Entity
+@Table(name = &quot;inventory_event&quot;)
+@Getter
+<span class="pc" id="L24">@Setter</span>
+<span class="pc" id="L25">@Builder</span>
+<span class="nc" id="L26">@NoArgsConstructor</span>
+<span class="fc" id="L27">@AllArgsConstructor</span>
+public class InventoryEventJpaEntity {
+    
+    @Id
+    @Column(name = &quot;id&quot;, nullable = false)
+<span class="fc" id="L32">    private UUID id;</span>
+    
+    @PrePersist
+    void generateId() {
+<span class="nc bnc" id="L36" title="All 2 branches missed.">        if (this.id == null) {</span>
+<span class="nc" id="L37">            this.id = UUID.randomUUID();</span>
+        }
+<span class="nc" id="L39">    }</span>
+    
+    @Column(name = &quot;product_sku&quot;)
+<span class="fc" id="L42">    private String productSku;</span>
+    
+    @Column(name = &quot;store_id&quot;)
+<span class="fc" id="L45">    private String storeId;</span>
+    
+    @Enumerated(EnumType.STRING)
+    @Column(name = &quot;event_type&quot;)
+<span class="fc" id="L49">    private EventType eventType;</span>
+    
+    @Column(name = &quot;quantity&quot;)
+<span class="fc" id="L52">    private Integer quantity;</span>
+    
+    @Column(name = &quot;event_data&quot;)
+<span class="fc" id="L55">    private String eventData;</span>
+    
+    @Column(name = &quot;created_at&quot;)
+<span class="fc" id="L58">    private LocalDateTime createdAt;</span>
+    
+    @Enumerated(EnumType.STRING)
+    @Column(name = &quot;status&quot;)
+<span class="fc" id="L62">    private ProcessingStatus status;</span>
+    
+    @Column(name = &quot;processed_at&quot;)
+<span class="fc" id="L65">    private LocalDateTime processedAt;</span>
+    
+<span class="fc" id="L67">    public enum EventType {</span>
+<span class="fc" id="L68">        RESERVE,</span>
+<span class="fc" id="L69">        COMMIT,</span>
+<span class="fc" id="L70">        CANCEL,</span>
+<span class="fc" id="L71">        UPDATE,</span>
+<span class="fc" id="L72">        RESTOCK</span>
+    }
+    
+<span class="fc" id="L75">    public enum ProcessingStatus {</span>
+<span class="fc" id="L76">        PENDING,</span>
+<span class="fc" id="L77">        PROCESSED,</span>
+<span class="fc" id="L78">        FAILED,</span>
+<span class="fc" id="L79">        IGNORED</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

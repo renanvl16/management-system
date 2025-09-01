@@ -1,0 +1,81 @@
+# Store Service - Production Configuration
+spring:
+  # Database Configuration
+  datasource:
+    url: ${DATABASE_URL}
+    driver-class-name: org.postgresql.Driver
+    username: ${DATABASE_USERNAME}
+    password: ${DATABASE_PASSWORD}
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+      leak-detection-threshold: 60000
+  
+  # JPA Configuration  
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: none
+      default-schema: store_service
+    show-sql: false
+    properties:
+      hibernate:
+        default_schema: store_service
+        
+  # Kafka Configuration
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
+    producer:
+      client-id: ${spring.application.name}-producer
+      acks: all
+      retries: 3
+      
+  # Redis Configuration
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD}
+      timeout: 2000ms
+
+# Management/Actuator Configuration
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,metrics,prometheus,info
+  endpoint:
+    health:
+      show-details: when-authorized
+  tracing:
+    sampling:
+      probability: 1.0
+  zipkin:
+    tracing:
+      endpoint: ${ZIPKIN_ENDPOINT:http://zipkin:9411/api/v2/spans}
+
+# Application Configuration
+app:
+  store:
+    id: ${STORE_ID}
+  kafka:
+    topics:
+      inventory-update: ${KAFKA_TOPIC_INVENTORY_UPDATE:inventory-update}
+  rate-limit:
+    enabled: true
+    requests-per-minute: 100
+    requests-per-hour: 1000
+
+# Logging Configuration
+logging:
+  level:
+    com.inventory.management.store.infrastructure.adapter.in.web: DEBUG
+    org.springframework.web: DEBUG
+    com.inventory.management: INFO
+    org.springframework.kafka: WARN
+    org.hibernate: WARN
+  pattern:
+    console: "%d{HH:mm:ss.SSS} [%thread] %-5level [%X{traceId:-},%X{spanId:-}] %logger{36} - %msg%n"

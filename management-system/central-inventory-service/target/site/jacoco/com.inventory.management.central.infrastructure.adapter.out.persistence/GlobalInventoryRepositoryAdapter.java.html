@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>GlobalInventoryRepositoryAdapter.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Central Inventory Service</a> &gt; <a href="index.source.html" class="el_package">com.inventory.management.central.infrastructure.adapter.out.persistence</a> &gt; <span class="el_source">GlobalInventoryRepositoryAdapter.java</span></div><h1>GlobalInventoryRepositoryAdapter.java</h1><pre class="source lang-java linenums">package com.inventory.management.central.infrastructure.adapter.out.persistence;
+
+import com.inventory.management.central.domain.model.GlobalInventory;
+import com.inventory.management.central.domain.model.CentralInventory;
+import com.inventory.management.central.domain.port.out.GlobalInventoryRepositoryPort;
+import com.inventory.management.central.infrastructure.adapter.out.persistence.mapper.InventoryEntityMapper;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.Optional;
+
+/**
+ * Implementação JPA do repositório de inventário global.
+ * 
+ * @author Sistema de Gerenciamento de Inventário
+ * @version 1.0.0
+ * @since 1.0.0
+ */
+@Component
+<span class="fc" id="L26">@RequiredArgsConstructor</span>
+<span class="fc" id="L27">@Slf4j</span>
+public class GlobalInventoryRepositoryAdapter implements GlobalInventoryRepositoryPort {
+    private final CentralInventoryJpaRepository jpaRepository;
+    private final InventoryEntityMapper mapper;
+
+    @Override
+    @Transactional
+    public GlobalInventory save(GlobalInventory inventory) {
+<span class="fc" id="L35">        log.debug(&quot;💾 Salvando inventário global: productSku={}&quot;, inventory.getProductSku());</span>
+<span class="fc" id="L36">        CentralInventory central = convertToCentral(inventory);</span>
+<span class="fc" id="L37">        CentralInventoryJpaEntity entity = mapper.toJpaEntity(central);</span>
+<span class="fc" id="L38">        CentralInventoryJpaEntity savedEntity = jpaRepository.save(entity);</span>
+<span class="fc" id="L39">        return convertToGlobal(mapper.toDomain(savedEntity));</span>
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Optional&lt;GlobalInventory&gt; findByProductSku(String productSku) {
+<span class="fc" id="L45">        log.debug(&quot;🔍 Buscando inventário global: productSku={}&quot;, productSku);</span>
+<span class="fc" id="L46">        return jpaRepository.findById(productSku)</span>
+<span class="fc" id="L47">                .map(mapper::toDomain)</span>
+<span class="fc" id="L48">                .map(this::convertToGlobal);</span>
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page&lt;GlobalInventory&gt; findAll(Pageable pageable) {
+<span class="fc" id="L54">        log.debug(&quot;📋 Listando todos os inventários globais com paginação&quot;);</span>
+<span class="fc" id="L55">        Page&lt;CentralInventoryJpaEntity&gt; entityPage = jpaRepository.findAll(pageable);</span>
+<span class="fc" id="L56">        List&lt;GlobalInventory&gt; inventories = entityPage.getContent()</span>
+<span class="fc" id="L57">                .stream()</span>
+<span class="fc" id="L58">                .map(mapper::toDomain)</span>
+<span class="fc" id="L59">                .map(this::convertToGlobal)</span>
+<span class="fc" id="L60">                .toList();</span>
+<span class="fc" id="L61">        return new PageImpl&lt;&gt;(inventories, pageable, entityPage.getTotalElements());</span>
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List&lt;GlobalInventory&gt; findByTotalQuantityLessThan(Integer threshold) {
+<span class="fc" id="L67">        log.debug(&quot;⚠️  Buscando produtos com estoque baixo: threshold={}&quot;, threshold);</span>
+<span class="fc" id="L68">        return jpaRepository.findByTotalQuantityLessThan(threshold)</span>
+<span class="fc" id="L69">                .stream()</span>
+<span class="fc" id="L70">                .map(mapper::toDomain)</span>
+<span class="fc" id="L71">                .map(this::convertToGlobal)</span>
+<span class="fc" id="L72">                .toList();</span>
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List&lt;GlobalInventory&gt; findByProductCategory(String category) {
+<span class="fc" id="L78">        log.debug(&quot;� Buscando por categoria: category={}&quot;, category);</span>
+<span class="fc" id="L79">        return jpaRepository.findByCategory(category)</span>
+<span class="fc" id="L80">                .stream()</span>
+<span class="fc" id="L81">                .map(mapper::toDomain)</span>
+<span class="fc" id="L82">                .map(this::convertToGlobal)</span>
+<span class="fc" id="L83">                .toList();</span>
+    }
+
+    @Override
+    @Transactional
+    public void deleteByProductSku(String productSku) {
+<span class="fc" id="L89">        log.debug(&quot;🗑️  Removendo inventário global: productSku={}&quot;, productSku);</span>
+<span class="fc" id="L90">        jpaRepository.deleteById(productSku);</span>
+<span class="fc" id="L91">    }</span>
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean existsByProductSku(String productSku) {
+<span class="fc" id="L96">        log.debug(&quot;❓ Verificando existência: productSku={}&quot;, productSku);</span>
+<span class="fc" id="L97">        return jpaRepository.existsById(productSku);</span>
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public long count() {
+<span class="fc" id="L103">        log.debug(&quot;� Contando inventários globais&quot;);</span>
+<span class="fc" id="L104">        return jpaRepository.count();</span>
+    }
+
+    // Métodos utilitários para conversão
+    private CentralInventory convertToCentral(GlobalInventory global) {
+<span class="fc" id="L109">        return CentralInventory.builder()</span>
+<span class="fc" id="L110">                .productSku(global.getProductSku())</span>
+<span class="fc" id="L111">                .productName(global.getProductName())</span>
+<span class="fc" id="L112">                .description(global.getDescription())</span>
+<span class="fc" id="L113">                .category(global.getCategory())</span>
+<span class="fc" id="L114">                .unitPrice(global.getUnitPrice())</span>
+<span class="fc" id="L115">                .totalQuantity(global.getTotalQuantity())</span>
+<span class="fc" id="L116">                .totalReservedQuantity(global.getTotalReservedQuantity())</span>
+<span class="fc" id="L117">                .availableQuantity(global.getAvailableQuantity())</span>
+<span class="fc" id="L118">                .lastUpdated(global.getLastUpdated())</span>
+<span class="fc" id="L119">                .version(global.getVersion())</span>
+<span class="fc" id="L120">                .active(global.getActive())</span>
+<span class="fc" id="L121">                .build();</span>
+    }
+
+    private GlobalInventory convertToGlobal(CentralInventory central) {
+<span class="fc" id="L125">        return GlobalInventory.builder()</span>
+<span class="fc" id="L126">                .productSku(central.getProductSku())</span>
+<span class="fc" id="L127">                .productName(central.getProductName())</span>
+<span class="fc" id="L128">                .description(central.getDescription())</span>
+<span class="fc" id="L129">                .category(central.getCategory())</span>
+<span class="fc" id="L130">                .unitPrice(central.getUnitPrice())</span>
+<span class="fc" id="L131">                .totalQuantity(central.getTotalQuantity())</span>
+<span class="fc" id="L132">                .totalReservedQuantity(central.getTotalReservedQuantity())</span>
+<span class="fc" id="L133">                .availableQuantity(central.getAvailableQuantity())</span>
+<span class="fc" id="L134">                .lastUpdated(central.getLastUpdated())</span>
+<span class="fc" id="L135">                .version(central.getVersion())</span>
+<span class="fc" id="L136">                .active(central.getActive())</span>
+<span class="fc" id="L137">                .build();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

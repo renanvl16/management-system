@@ -1,0 +1,214 @@
+package com.inventory.management.store.infrastructure.adapter.in.web.dto.response;
+
+import com.inventory.management.store.application.dto.response.CommitProductResponse;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+/**
+ * Testes unitários para CommitResponse.
+ * 
+ * @author Sistema de Gerenciamento de Inventário
+ * @version 1.0.0
+ * @since 1.0.0
+ */
+@DisplayName("CommitResponse Tests")
+class CommitResponseTest {
+
+    private static final String TEST_SKU = "TEST-SKU-001";
+    private static final String TEST_MESSAGE = "Test message";
+
+    @Nested
+    @DisplayName("Constructor Tests")
+    class ConstructorTests {
+
+        @Test
+        @DisplayName("Deve criar CommitResponse com construtor vazio")
+        void shouldCreateWithNoArgsConstructor() {
+            // When
+            CommitResponse response = new CommitResponse();
+            
+            // Then
+            assertNotNull(response);
+            assertFalse(response.isSuccess());
+            assertNull(response.getProductSku());
+            assertNull(response.getFinalQuantity());
+            assertNull(response.getAvailableQuantity());
+            assertNull(response.getMessage());
+        }
+
+        @Test
+        @DisplayName("Deve criar CommitResponse com construtor completo")
+        void shouldCreateWithAllArgsConstructor() {
+            // Given
+            boolean success = true;
+            String productSku = TEST_SKU;
+            Integer finalQuantity = 85;
+            Integer availableQuantity = 75;
+            String message = TEST_MESSAGE;
+            
+            // When
+            CommitResponse response = new CommitResponse(
+                success, productSku, finalQuantity, availableQuantity, message
+            );
+            
+            // Then
+            assertNotNull(response);
+            assertTrue(response.isSuccess());
+            assertEquals(productSku, response.getProductSku());
+            assertEquals(finalQuantity, response.getFinalQuantity());
+            assertEquals(availableQuantity, response.getAvailableQuantity());
+            assertEquals(message, response.getMessage());
+        }
+    }
+
+    @Nested
+    @DisplayName("Factory Methods Tests")
+    class FactoryMethodsTests {
+
+        @Test
+        @DisplayName("Deve criar CommitResponse a partir de CommitProductResponse")
+        void shouldCreateFromCommitProductResponse() {
+            // Given
+            CommitProductResponse source = CommitProductResponse.builder()
+                .success(true)
+                .productSku("COMMIT-SKU-001")
+                .finalQuantity(90)
+                .availableQuantity(80)
+                .message("Venda confirmada com sucesso")
+                .build();
+            
+            // When
+            CommitResponse response = CommitResponse.from(source);
+            
+            // Then
+            assertNotNull(response);
+            assertTrue(response.isSuccess());
+            assertEquals("COMMIT-SKU-001", response.getProductSku());
+            assertEquals(90, response.getFinalQuantity());
+            assertEquals(80, response.getAvailableQuantity());
+            assertEquals("Venda confirmada com sucesso", response.getMessage());
+        }
+
+        @Test
+        @DisplayName("Deve criar CommitResponse de erro")
+        void shouldCreateErrorResponse() {
+            // Given
+            String errorMessage = "Erro na confirmação da venda";
+            
+            // When
+            CommitResponse response = CommitResponse.error(errorMessage);
+            
+            // Then
+            assertNotNull(response);
+            assertFalse(response.isSuccess());
+            assertNull(response.getProductSku());
+            assertNull(response.getFinalQuantity());
+            assertNull(response.getAvailableQuantity());
+            assertEquals(errorMessage, response.getMessage());
+        }
+
+        @Test
+        @DisplayName("Deve criar CommitResponse de erro com null message")
+        void shouldCreateErrorResponseWithNullMessage() {
+            // When
+            CommitResponse response = CommitResponse.error(null);
+            
+            // Then
+            assertNotNull(response);
+            assertFalse(response.isSuccess());
+            assertNull(response.getProductSku());
+            assertNull(response.getFinalQuantity());
+            assertNull(response.getAvailableQuantity());
+            assertNull(response.getMessage());
+        }
+    }
+
+    @Nested
+    @DisplayName("Object Behavior Tests")
+    class ObjectBehaviorTests {
+
+        @Test
+        @DisplayName("Deve permitir modificação dos campos")
+        void shouldAllowFieldModification() {
+            // Given
+            CommitResponse response = new CommitResponse();
+            
+            // When
+            response.setSuccess(true);
+            response.setProductSku("MODIFIED-SKU");
+            response.setFinalQuantity(65);
+            response.setAvailableQuantity(55);
+            response.setMessage("Modified message");
+            
+            // Then
+            assertTrue(response.isSuccess());
+            assertEquals("MODIFIED-SKU", response.getProductSku());
+            assertEquals(65, response.getFinalQuantity());
+            assertEquals(55, response.getAvailableQuantity());
+            assertEquals("Modified message", response.getMessage());
+        }
+    }
+
+    @Nested
+    @DisplayName("Edge Cases Tests")
+    class EdgeCasesTests {
+
+        @Test
+        @DisplayName("Deve lidar com valores zero")
+        void shouldHandleZeroValues() {
+            // Given
+            CommitResponse response = new CommitResponse(
+                true, TEST_SKU, 0, 0, TEST_MESSAGE
+            );
+            
+            // Then
+            assertEquals(0, response.getFinalQuantity());
+            assertEquals(0, response.getAvailableQuantity());
+        }
+
+        @Test
+        @DisplayName("Deve lidar com strings vazias")
+        void shouldHandleEmptyStrings() {
+            // Given
+            CommitResponse response = new CommitResponse(
+                true, "", 10, 5, ""
+            );
+            
+            // Then
+            assertEquals("", response.getProductSku());
+            assertEquals("", response.getMessage());
+        }
+
+        @Test
+        @DisplayName("Deve lidar com valores negativos")
+        void shouldHandleNegativeValues() {
+            // Given
+            CommitResponse response = new CommitResponse(
+                false, TEST_SKU, -1, -2, "Negative values"
+            );
+            
+            // Then
+            assertEquals(-1, response.getFinalQuantity());
+            assertEquals(-2, response.getAvailableQuantity());
+        }
+
+        @Test
+        @DisplayName("Deve lidar com todos os campos null")
+        void shouldHandleAllNullFields() {
+            // Given
+            CommitResponse response = new CommitResponse(
+                false, null, null, null, null
+            );
+            
+            // Then
+            assertFalse(response.isSuccess());
+            assertNull(response.getProductSku());
+            assertNull(response.getFinalQuantity());
+            assertNull(response.getAvailableQuantity());
+            assertNull(response.getMessage());
+        }
+    }
+}

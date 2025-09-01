@@ -1,0 +1,243 @@
+package com.inventory.management.central.domain.service;
+
+import com.inventory.management.central.domain.model.CentralInventory;
+import com.inventory.management.central.domain.model.InventoryEvent;
+import com.inventory.management.central.domain.model.StoreInventory;
+import com.inventory.management.central.domain.port.CentralInventoryRepository;
+import com.inventory.management.central.domain.port.InventoryEventRepository;
+import com.inventory.management.central.domain.port.StoreInventoryRepository;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
+
+/**
+ * Serviço de domínio para processamento de eventos de inventário.
+ * 
+ * Este serviço é responsável por processar eventos recebidos via Kafka
+ * das lojas e manter o inventário central sincronizado em tempo real.
+ * 
+ * @author Sistema de Gerenciamento de Inventário
+ * @version 1.0.0
+ * @since 1.0.0
+ */
+@Service
+@RequiredArgsConstructor
+@Slf4j
+public class InventoryEventProcessingService {
+    
+    private final CentralInventoryRepository centralInventoryRepository;
+    private final StoreInventoryRepository storeInventoryRepository;
+    private final InventoryEventRepository inventoryEventRepository;
+    
+    /**
+     * Processa um evento de inventário recebido de uma loja.
+     * 
+     * @param event evento a ser processado
+     * @return true se processado com sucesso
+     */
+    @Transactional
+    public boolean processInventoryEvent(InventoryEvent event) {
+        log.info("🔄 Processando evento de inventário: eventId={}, tipo={}, produto={}, loja={}", 
+                event.getEventId(), event.getEventType(), event.getProductSku(), event.getStoreId());
+        
+        try {
+            // Validar evento
+            if (!isEventValid(event)) {
+                log.warn("⚠️  Evento inválido ignorado: eventId={}", event.getEventId());
+                event.markAsIgnored("Evento inválido ou incompleto");
+                inventoryEventRepository.save(event);
+                return false;
+            }
+            
+            // Verificar se evento já foi processado (idempotência)
+            if (inventoryEventRepository.existsByEventId(event.getEventId())) {
+                log.warn("⚠️  Evento duplicado ignorado: eventId={}", event.getEventId());
+                return true; // Considera sucesso para evitar reprocessamento
+            }
+            
+            // Salvar evento PRIMEIRO para auditoria (transação separada)
+            event.setProcessingStatus(InventoryEvent.ProcessingStatus.PENDING);
+            InventoryEvent savedEvent = inventoryEventRepository.save(event);
+            log.info("💾 Evento salvo com sucesso para auditoria: eventId={}", savedEvent.getEventId());
+            
+            // Processar baseado no tipo de evento (SEM atualizar inventários por enquanto)
+            switch (event.getEventType()) {
+                case RESERVE -> log.info("🔒 Evento RESERVE recebido: {}", event.getProductSku());
+                case COMMIT -> log.info("✅ Evento COMMIT recebido: {}", event.getProductSku());
+                case CANCEL -> log.info("❌ Evento CANCEL recebido: {}", event.getProductSku());
+                case UPDATE -> log.info("🔄 Evento UPDATE recebido: {}", event.getProductSku());
+                case RESTOCK -> log.info("📦 Evento RESTOCK recebido: {}", event.getProductSku());
+                default -> {
+                    log.warn("⚠️  Tipo de evento não reconhecido: {}", event.getEventType());
+                    savedEvent.markAsFailed("Tipo de evento não reconhecido");
+                    inventoryEventRepository.save(savedEvent);
+                    return false;
+                }
+            }
+            
+            // Marcar como processado
+            savedEvent.markAsProcessed();
+            inventoryEventRepository.save(savedEvent);
+            
+            log.info("✅ Evento processado com sucesso: eventId={}", savedEvent.getEventId());
+            return true;
+            
+        } catch (Exception e) {
+            log.error("❌ Erro ao processar evento: eventId={}, erro={}", 
+                    event.getEventId(), e.getMessage(), e);
+            
+            try {
+                event.markAsFailed(e.getMessage());
+                inventoryEventRepository.save(event);
+            } catch (Exception saveError) {
+                log.error("❌ Erro adicional ao salvar evento com falha: {}", saveError.getMessage());
+            }
+            return false;
+        }
+    }
+    
+    /**
+     * Valida se o evento está completo e correto.
+     */
+    private boolean isEventValid(InventoryEvent event) {
+        return event != null &&
+               event.getEventId() != null &&
+               event.getProductSku() != null && !event.getProductSku().trim().isEmpty() &&
+               event.getStoreId() != null && !event.getStoreId().trim().isEmpty() &&
+               event.getEventType() != null &&
+               event.getNewQuantity() != null && event.getNewQuantity() >= 0 &&
+               event.getTimestamp() != null;
+    }
+}
+    
+    }
+    }
+
+    /**
+     * Valida se o evento está completo e correto.
+     */
+    private boolean isEventValid(InventoryEvent event) {
+        return event != null &&
+               event.getEventId() != null &&
+               event.getProductSku() != null && !event.getProductSku().trim().isEmpty() &&
+               event.getStoreId() != null && !event.getStoreId().trim().isEmpty() &&
+               event.getEventType() != null &&
+               event.getNewQuantity() != null && event.getNewQuantity() >= 0 &&
+               event.getTimestamp() != null;
+    }
+}
+    
+    /**
+     * Atualiza o inventário da loja baseado no evento.
+     */
+    private void updateStoreInventory(InventoryEvent event) {
+        Optional<StoreInventory> storeInventoryOpt = 
+                storeInventoryRepository.findByProductSkuAndStoreId(
+                        event.getProductSku(), event.getStoreId());
+        
+        StoreInventory storeInventory;
+        if (storeInventoryOpt.isPresent()) {
+            storeInventory = storeInventoryOpt.get();
+            // Atualizar apenas se houver mudança significativa
+            if (!storeInventory.getQuantity().equals(event.getNewQuantity()) ||
+                !storeInventory.getReservedQuantity().equals(event.getReservedQuantity() != null ? event.getReservedQuantity() : 0)) {
+                
+                storeInventory.setQuantity(event.getNewQuantity());
+                storeInventory.setReservedQuantity(event.getReservedQuantity() != null ? event.getReservedQuantity() : 0);
+                storeInventory.calculateAvailableQuantity();
+                storeInventory.setLastUpdated(LocalDateTime.now());
+                storeInventory.markAsSynchronized();
+                
+                storeInventoryRepository.save(storeInventory);
+            }
+        } else {
+            // Criar novo registro se não existe
+            storeInventory = StoreInventory.create(
+                    event.getProductSku(), 
+                    event.getStoreId(), 
+                    "Store " + event.getStoreId()
+            );
+            storeInventory.setQuantity(event.getNewQuantity());
+            storeInventory.setReservedQuantity(event.getReservedQuantity() != null ? event.getReservedQuantity() : 0);
+            storeInventory.calculateAvailableQuantity();
+            storeInventory.setLastUpdated(LocalDateTime.now());
+            storeInventory.markAsSynchronized();
+            
+            storeInventoryRepository.save(storeInventory);
+        }
+    }
+    
+    /**
+     * Atualiza o inventário central consolidado.
+     */
+    private void updateCentralInventory(String productSku) {
+        // Calcular totais agregados de todas as lojas
+        Integer totalQuantity = storeInventoryRepository.sumQuantityByProductSku(productSku);
+        Integer totalReserved = storeInventoryRepository.sumReservedQuantityByProductSku(productSku);
+        
+        if (totalQuantity == null) totalQuantity = 0;
+        if (totalReserved == null) totalReserved = 0;
+        
+        Optional<CentralInventory> centralInventoryOpt = 
+                centralInventoryRepository.findByProductSku(productSku);
+        
+        CentralInventory centralInventory;
+        if (centralInventoryOpt.isPresent()) {
+            centralInventory = centralInventoryOpt.get();
+        } else {
+            // Criar novo registro se não existe
+            centralInventory = CentralInventory.create(productSku, "Product " + productSku);
+        }
+        
+        // Atualizar quantidades consolidadas
+        centralInventory.setTotalQuantity(totalQuantity);
+        centralInventory.setTotalReservedQuantity(totalReserved);
+        centralInventory.calculateAvailableQuantity();
+        centralInventory.setLastUpdated(LocalDateTime.now());
+        
+        centralInventoryRepository.save(centralInventory);
+        
+        log.debug("📊 Inventário central atualizado: produto={}, total={}, reservado={}, disponível={}", 
+                productSku, totalQuantity, totalReserved, centralInventory.getAvailableQuantity());
+    }
+    
+    /**
+     * Valida se o evento está completo e correto.
+     */
+    private boolean isEventValid(InventoryEvent event) {
+        return event != null &&
+               event.getEventId() != null &&
+               event.getProductSku() != null && !event.getProductSku().trim().isEmpty() &&
+               event.getStoreId() != null && !event.getStoreId().trim().isEmpty() &&
+               event.getEventType() != null &&
+               event.getNewQuantity() != null && event.getNewQuantity() >= 0 &&
+               event.getTimestamp() != null;
+    }
+    
+    /**
+     * Reprocessa eventos que falharam.
+     * 
+     * @return quantidade de eventos reprocessados
+     */
+    @Transactional
+    public int reprocessFailedEvents() {
+        List<InventoryEvent> failedEvents = inventoryEventRepository.findFailedEvents();
+        
+        log.info("🔄 Reprocessando {} eventos que falharam", failedEvents.size());
+        
+        int reprocessedCount = 0;
+        for (InventoryEvent event : failedEvents) {
+            if (processInventoryEvent(event)) {
+                reprocessedCount++;
+            }
+        }
+        
+        log.info("✅ {} eventos reprocessados com sucesso", reprocessedCount);
+        return reprocessedCount;
+    }
+}

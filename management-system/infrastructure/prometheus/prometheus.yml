@@ -1,0 +1,50 @@
+# Configuração do Prometheus para Sistema de Inventário
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+# Configurações de alertas (opcional)
+rule_files:
+  # - "first_rules.yml"
+  # - "second_rules.yml"
+
+# Configuração dos alvos para coleta de métricas
+scrape_configs:
+  # Prometheus próprio
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Store Service
+  - job_name: 'store-service'
+    metrics_path: '/store-service/actuator/prometheus'
+    static_configs:
+      - targets: ['store-service:8081']
+    scrape_interval: 30s
+    scrape_timeout: 10s
+
+  # Central Inventory Service
+  - job_name: 'central-inventory-service'
+    metrics_path: '/central-inventory-service/actuator/prometheus'
+    static_configs:
+      - targets: ['central-inventory-service:8082']
+    scrape_interval: 30s
+    scrape_timeout: 10s
+
+  # Redis Exporter (se necessário)
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis:6379']
+    scrape_interval: 30s
+
+  # PostgreSQL Exporter (se necessário)  
+  - job_name: 'postgresql'
+    static_configs:
+      - targets: ['postgres:5432']
+    scrape_interval: 30s
+
+  # Kafka Exporter (se necessário)
+  - job_name: 'kafka'
+    static_configs:
+      - targets: ['kafka:29092']
+    scrape_interval: 30s

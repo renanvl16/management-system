@@ -1,0 +1,79 @@
+-------------------------------------------------------------------------------
+Test set: com.inventory.management.store.cucumber.CucumberTestRunner
+-------------------------------------------------------------------------------
+Tests run: 24, Failures: 9, Errors: 0, Skipped: 0, Time elapsed: 11.494 s <<< FAILURE! - in com.inventory.management.store.cucumber.CucumberTestRunner
+Sincronização de Estoque em Tempo Real - Testes Integrados.Sincronização de reserva de produto com sucesso  Time elapsed: 9.195 s  <<< FAILURE!
+org.opentest4j.AssertionFailedError: 
+
+expected: 200 OK
+ but was: 404 NOT_FOUND
+	at java.base/java.lang.reflect.Constructor.newInstanceWithCaller(Constructor.java:502)
+	at com.inventory.management.store.cucumber.stepdefinitions.IntegratedInventorySyncSteps.queOSistemaEstaRodandoComInfraestruturaCompleta(IntegratedInventorySyncSteps.java:89)
+	at ✽.que o sistema está rodando com infraestrutura completa(classpath:features/integration/real-time-inventory-sync.feature:9)
+
+Sincronização de Estoque em Tempo Real - Testes Integrados.Sincronização de cancelamento de reserva  Time elapsed: 0.028 s  <<< FAILURE!
+org.opentest4j.AssertionFailedError: 
+
+expected: 200 OK
+ but was: 404 NOT_FOUND
+	at java.base/java.lang.reflect.Constructor.newInstanceWithCaller(Constructor.java:502)
+	at com.inventory.management.store.cucumber.stepdefinitions.IntegratedInventorySyncSteps.queOSistemaEstaRodandoComInfraestruturaCompleta(IntegratedInventorySyncSteps.java:89)
+	at ✽.que o sistema está rodando com infraestrutura completa(classpath:features/integration/real-time-inventory-sync.feature:9)
+
+Sincronização de Estoque em Tempo Real - Testes Integrados.Recuperação automática após falha temporária do Redis  Time elapsed: 0.027 s  <<< FAILURE!
+org.opentest4j.AssertionFailedError: 
+
+expected: 200 OK
+ but was: 404 NOT_FOUND
+	at java.base/java.lang.reflect.Constructor.newInstanceWithCaller(Constructor.java:502)
+	at com.inventory.management.store.cucumber.stepdefinitions.IntegratedInventorySyncSteps.queOSistemaEstaRodandoComInfraestruturaCompleta(IntegratedInventorySyncSteps.java:89)
+	at ✽.que o sistema está rodando com infraestrutura completa(classpath:features/integration/real-time-inventory-sync.feature:9)
+
+Sincronização de Estoque em Tempo Real - Testes Integrados.Gerenciamento de concorrência em reservas simultâneas  Time elapsed: 1.042 s  <<< FAILURE!
+org.opentest4j.AssertionFailedError: 
+
+expected: 200 OK
+ but was: 404 NOT_FOUND
+	at java.base/java.lang.reflect.Constructor.newInstanceWithCaller(Constructor.java:502)
+	at com.inventory.management.store.cucumber.stepdefinitions.IntegratedInventorySyncSteps.queOSistemaEstaRodandoComInfraestruturaCompleta(IntegratedInventorySyncSteps.java:89)
+	at ✽.que o sistema está rodando com infraestrutura completa(classpath:features/integration/real-time-inventory-sync.feature:9)
+
+Sincronização de Estoque em Tempo Real - Testes Integrados.Processamento em lote de atualizações de estoque  Time elapsed: 0.035 s  <<< FAILURE!
+org.opentest4j.AssertionFailedError: 
+
+expected: 200 OK
+ but was: 404 NOT_FOUND
+	at java.base/java.lang.reflect.Constructor.newInstanceWithCaller(Constructor.java:502)
+	at com.inventory.management.store.cucumber.stepdefinitions.IntegratedInventorySyncSteps.queOSistemaEstaRodandoComInfraestruturaCompleta(IntegratedInventorySyncSteps.java:89)
+	at ✽.que o sistema está rodando com infraestrutura completa(classpath:features/integration/real-time-inventory-sync.feature:9)
+
+Sincronização de Estoque em Tempo Real - Testes Integrados.Monitoramento de métricas em tempo real  Time elapsed: 0.021 s  <<< FAILURE!
+org.opentest4j.AssertionFailedError: 
+
+expected: 200 OK
+ but was: 404 NOT_FOUND
+	at java.base/java.lang.reflect.Constructor.newInstanceWithCaller(Constructor.java:502)
+	at com.inventory.management.store.cucumber.stepdefinitions.IntegratedInventorySyncSteps.queOSistemaEstaRodandoComInfraestruturaCompleta(IntegratedInventorySyncSteps.java:89)
+	at ✽.que o sistema está rodando com infraestrutura completa(classpath:features/integration/real-time-inventory-sync.feature:9)
+
+Gerenciamento de Inventário.Buscar produtos por nome  Time elapsed: 0.028 s  <<< FAILURE!
+java.lang.AssertionError: 
+
+Expecting actual not to be null
+	at com.inventory.management.store.cucumber.stepdefinitions.ProductSearchSteps.o_produto_deve_ter_nome(ProductSearchSteps.java:101)
+	at com.inventory.management.store.cucumber.stepdefinitions.ProductSearchSteps.o_produto_deve_ter_o_nome(ProductSearchSteps.java:108)
+	at ✽.o produto deve ter o nome "Produto Teste"(classpath:features/inventory-management.feature:26)
+
+Gerenciamento de Inventário.Buscar produto que não existe  Time elapsed: 0.021 s  <<< FAILURE!
+org.opentest4j.AssertionFailedError: Mensagem não deve ser null ==> expected: not <null>
+	at com.inventory.management.store.cucumber.stepdefinitions.ProductReservationSteps.a_mensagem_deve_ser(ProductReservationSteps.java:255)
+	at ✽.a mensagem deve ser "Produto não encontrado"(classpath:features/inventory-management.feature:40)
+
+Reserva de Produtos.Tentar reservar produto inativo  Time elapsed: 0.025 s  <<< FAILURE!
+org.opentest4j.AssertionFailedError: 
+
+Expecting value to be false but was true
+	at java.base/java.lang.reflect.Constructor.newInstanceWithCaller(Constructor.java:502)
+	at com.inventory.management.store.cucumber.stepdefinitions.ProductReservationSteps.a_reserva_deve_falhar(ProductReservationSteps.java:187)
+	at ✽.a reserva deve falhar(classpath:features/product-reservation.feature:50)
+

@@ -1,0 +1,342 @@
+package com.inventory.management.store.infrastructure.adapter.in.web.dto.response;
+
+import com.inventory.management.store.application.dto.response.CancelReservationResponse;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+/**
+ * Testes unitários para CancelResponse.
+ * 
+ * @author Sistema de Gerenciamento de Inventário
+ * @version 1.0.0
+ * @since 1.0.0
+ */
+@DisplayName("CancelResponse Tests")
+class CancelResponseTest {
+
+    private static final String TEST_SKU = "SKU-001";
+    private static final String TEST_PRODUCT_NAME = "Test Product";
+    private static final String TEST_MESSAGE = "Test message";
+
+    @Nested
+    @DisplayName("Constructor Tests")
+    class ConstructorTests {
+
+        @Test
+        @DisplayName("Deve criar CancelResponse com construtor vazio")
+        void shouldCreateWithNoArgsConstructor() {
+            // When
+            CancelResponse response = new CancelResponse();
+            
+            // Then
+            assertNotNull(response);
+            assertFalse(response.isSuccess());
+            assertNull(response.getMessage());
+            assertNull(response.getProductSku());
+            assertNull(response.getProductName());
+            assertNull(response.getTotalQuantity());
+            assertNull(response.getReservedQuantity());
+            assertNull(response.getAvailableQuantity());
+            assertNull(response.getCancelledQuantity());
+        }
+
+        @Test
+        @DisplayName("Deve criar CancelResponse com construtor completo")
+        void shouldCreateWithAllArgsConstructor() {
+            // Given
+            boolean success = true;
+            String message = TEST_MESSAGE;
+            String productSku = TEST_SKU;
+            String productName = TEST_PRODUCT_NAME;
+            Integer totalQuantity = 100;
+            Integer reservedQuantity = 20;
+            Integer availableQuantity = 80;
+            Integer cancelledQuantity = 5;
+            
+            // When
+            CancelResponse response = new CancelResponse(
+                success, message, productSku, productName, 
+                totalQuantity, reservedQuantity, availableQuantity, cancelledQuantity
+            );
+            
+            // Then
+            assertNotNull(response);
+            assertTrue(response.isSuccess());
+            assertEquals(message, response.getMessage());
+            assertEquals(productSku, response.getProductSku());
+            assertEquals(productName, response.getProductName());
+            assertEquals(totalQuantity, response.getTotalQuantity());
+            assertEquals(reservedQuantity, response.getReservedQuantity());
+            assertEquals(availableQuantity, response.getAvailableQuantity());
+            assertEquals(cancelledQuantity, response.getCancelledQuantity());
+        }
+
+        @Test
+        @DisplayName("Deve criar CancelResponse com builder")
+        void shouldCreateWithBuilder() {
+            // Given
+            boolean success = true;
+            String message = "Built message";
+            String productSku = "BUILT-SKU-001";
+            String productName = "Built Product";
+            Integer totalQuantity = 50;
+            Integer reservedQuantity = 10;
+            Integer availableQuantity = 40;
+            Integer cancelledQuantity = 2;
+            
+            // When
+            CancelResponse response = CancelResponse.builder()
+                .success(success)
+                .message(message)
+                .productSku(productSku)
+                .productName(productName)
+                .totalQuantity(totalQuantity)
+                .reservedQuantity(reservedQuantity)
+                .availableQuantity(availableQuantity)
+                .cancelledQuantity(cancelledQuantity)
+                .build();
+            
+            // Then
+            assertNotNull(response);
+            assertTrue(response.isSuccess());
+            assertEquals(message, response.getMessage());
+            assertEquals(productSku, response.getProductSku());
+            assertEquals(productName, response.getProductName());
+            assertEquals(totalQuantity, response.getTotalQuantity());
+            assertEquals(reservedQuantity, response.getReservedQuantity());
+            assertEquals(availableQuantity, response.getAvailableQuantity());
+            assertEquals(cancelledQuantity, response.getCancelledQuantity());
+        }
+    }
+
+    @Nested
+    @DisplayName("Factory Methods Tests")
+    class FactoryMethodsTests {
+
+        @Test
+        @DisplayName("Deve criar CancelResponse a partir de CancelReservationResponse")
+        void shouldCreateFromCancelReservationResponse() {
+            // Given
+            CancelReservationResponse source = CancelReservationResponse.builder()
+                .success(true)
+                .message("Cancelamento realizado com sucesso")
+                .productSku("CANCEL-SKU-001")
+                .productName("Product to Cancel")
+                .totalQuantity(200)
+                .reservedQuantity(30)
+                .availableQuantity(170)
+                .cancelledQuantity(10)
+                .build();
+            
+            // When
+            CancelResponse response = CancelResponse.from(source);
+            
+            // Then
+            assertNotNull(response);
+            assertTrue(response.isSuccess());
+            assertEquals("Cancelamento realizado com sucesso", response.getMessage());
+            assertEquals("CANCEL-SKU-001", response.getProductSku());
+            assertEquals("Product to Cancel", response.getProductName());
+            assertEquals(200, response.getTotalQuantity());
+            assertEquals(30, response.getReservedQuantity());
+            assertEquals(170, response.getAvailableQuantity());
+            assertEquals(10, response.getCancelledQuantity());
+        }
+
+        @Test
+        @DisplayName("Deve criar CancelResponse de erro")
+        void shouldCreateErrorResponse() {
+            // Given
+            String errorMessage = "Erro no cancelamento";
+            
+            // When
+            CancelResponse response = CancelResponse.error(errorMessage);
+            
+            // Then
+            assertNotNull(response);
+            assertFalse(response.isSuccess());
+            assertEquals(errorMessage, response.getMessage());
+            assertNull(response.getProductSku());
+            assertNull(response.getProductName());
+            assertNull(response.getTotalQuantity());
+            assertNull(response.getReservedQuantity());
+            assertNull(response.getAvailableQuantity());
+            assertNull(response.getCancelledQuantity());
+        }
+
+        @Test
+        @DisplayName("Deve criar CancelResponse de erro com null message")
+        void shouldCreateErrorResponseWithNullMessage() {
+            // When
+            CancelResponse response = CancelResponse.error(null);
+            
+            // Then
+            assertNotNull(response);
+            assertFalse(response.isSuccess());
+            assertNull(response.getMessage());
+        }
+    }
+
+    @Nested
+    @DisplayName("Object Behavior Tests")
+    class ObjectBehaviorTests {
+
+        @Test
+        @DisplayName("Deve implementar equals e hashCode corretamente")
+        void shouldImplementEqualsAndHashCode() {
+            // Given
+            CancelResponse response1 = CancelResponse.builder()
+                .success(true)
+                .message(TEST_MESSAGE)
+                .productSku(TEST_SKU)
+                .productName(TEST_PRODUCT_NAME)
+                .totalQuantity(100)
+                .reservedQuantity(10)
+                .availableQuantity(90)
+                .cancelledQuantity(5)
+                .build();
+                
+                CancelResponse response2 = CancelResponse.builder()
+                .success(true)
+                .message(TEST_MESSAGE)
+                .productSku(TEST_SKU)
+                .productName(TEST_PRODUCT_NAME)
+                .totalQuantity(100)
+                .reservedQuantity(10)
+                .availableQuantity(90)
+                .cancelledQuantity(5)
+                .build();
+                
+            CancelResponse response3 = CancelResponse.builder()
+                .success(false)
+                .message("Different")
+                .build();
+            
+            // Then
+            assertEquals(response1, response2);
+            assertEquals(response1.hashCode(), response2.hashCode());
+            assertNotEquals(response1, response3);
+            assertNotEquals(response1.hashCode(), response3.hashCode());
+        }
+
+        @Test
+        @DisplayName("Deve implementar toString corretamente")
+        void shouldImplementToString() {
+            // Given
+            CancelResponse response = CancelResponse.builder()
+                .success(true)
+                .message(TEST_MESSAGE)
+                .productSku(TEST_SKU)
+                .productName(TEST_PRODUCT_NAME)
+                .totalQuantity(100)
+                .reservedQuantity(10)
+                .availableQuantity(90)
+                .cancelledQuantity(5)
+                .build();
+            
+            // When
+            String toString = response.toString();
+            
+            // Then
+            assertNotNull(toString);
+            assertTrue(toString.contains("success=true"));
+            assertTrue(toString.contains("message=Test message"));
+            assertTrue(toString.contains("productSku=SKU-001"));
+            assertTrue(toString.contains("productName=Test Product"));
+            assertTrue(toString.contains("totalQuantity=100"));
+            assertTrue(toString.contains("reservedQuantity=10"));
+            assertTrue(toString.contains("availableQuantity=90"));
+            assertTrue(toString.contains("cancelledQuantity=5"));
+        }
+
+        @Test
+        @DisplayName("Deve permitir modificação dos campos")
+        void shouldAllowFieldModification() {
+            // Given
+            CancelResponse response = new CancelResponse();
+            
+            // When
+            response.setSuccess(true);
+            response.setMessage("Modified message");
+            response.setProductSku("MODIFIED-SKU");
+            response.setProductName("Modified Product");
+            response.setTotalQuantity(150);
+            response.setReservedQuantity(15);
+            response.setAvailableQuantity(135);
+            response.setCancelledQuantity(7);
+            
+            // Then
+            assertTrue(response.isSuccess());
+            assertEquals("Modified message", response.getMessage());
+            assertEquals("MODIFIED-SKU", response.getProductSku());
+            assertEquals("Modified Product", response.getProductName());
+            assertEquals(150, response.getTotalQuantity());
+            assertEquals(15, response.getReservedQuantity());
+            assertEquals(135, response.getAvailableQuantity());
+            assertEquals(7, response.getCancelledQuantity());
+        }
+    }
+
+    @Nested
+    @DisplayName("Edge Cases Tests")
+    class EdgeCasesTests {
+
+        @Test
+        @DisplayName("Deve lidar com valores zero")
+        void shouldHandleZeroValues() {
+            // Given
+            CancelResponse response = CancelResponse.builder()
+                .success(true)
+                .totalQuantity(0)
+                .reservedQuantity(0)
+                .availableQuantity(0)
+                .cancelledQuantity(0)
+                .build();
+            
+            // Then
+            assertEquals(0, response.getTotalQuantity());
+            assertEquals(0, response.getReservedQuantity());
+            assertEquals(0, response.getAvailableQuantity());
+            assertEquals(0, response.getCancelledQuantity());
+        }
+
+        @Test
+        @DisplayName("Deve lidar com strings vazias")
+        void shouldHandleEmptyStrings() {
+            // Given
+            CancelResponse response = CancelResponse.builder()
+                .success(true)
+                .message("")
+                .productSku("")
+                .productName("")
+                .build();
+            
+            // Then
+            assertEquals("", response.getMessage());
+            assertEquals("", response.getProductSku());
+            assertEquals("", response.getProductName());
+        }
+
+        @Test
+        @DisplayName("Deve lidar com valores negativos")
+        void shouldHandleNegativeValues() {
+            // Given
+            CancelResponse response = CancelResponse.builder()
+                .success(false)
+                .totalQuantity(-1)
+                .reservedQuantity(-2)
+                .availableQuantity(-3)
+                .cancelledQuantity(-4)
+                .build();
+            
+            // Then
+            assertEquals(-1, response.getTotalQuantity());
+            assertEquals(-2, response.getReservedQuantity());
+            assertEquals(-3, response.getAvailableQuantity());
+            assertEquals(-4, response.getCancelledQuantity());
+        }
+    }
+}

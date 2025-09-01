@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CentralInventoryRepositoryAdapter.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Central Inventory Service</a> &gt; <a href="index.source.html" class="el_package">com.inventory.management.central.infrastructure.adapter.out.persistence</a> &gt; <span class="el_source">CentralInventoryRepositoryAdapter.java</span></div><h1>CentralInventoryRepositoryAdapter.java</h1><pre class="source lang-java linenums">package com.inventory.management.central.infrastructure.adapter.out.persistence;
+
+import com.inventory.management.central.domain.model.CentralInventory;
+import com.inventory.management.central.domain.port.CentralInventoryRepository;
+import com.inventory.management.central.infrastructure.adapter.out.persistence.CentralInventoryJpaRepository;
+import com.inventory.management.central.infrastructure.adapter.out.persistence.mapper.InventoryEntityMapper;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.Optional;
+
+/**
+ * Implementação JPA do repositório de inventário central.
+ */
+@Component
+<span class="fc" id="L19">@RequiredArgsConstructor</span>
+<span class="fc" id="L20">@Slf4j</span>
+public class CentralInventoryRepositoryAdapter implements CentralInventoryRepository {
+    private final CentralInventoryJpaRepository jpaRepository;
+    private final InventoryEntityMapper mapper;
+
+    @Override
+    @Transactional
+    public CentralInventory save(CentralInventory inventory) {
+<span class="fc" id="L28">        log.debug(&quot;💾 Salvando inventário central: productSku={}&quot;, inventory.getProductSku());</span>
+        
+        // Verificar se já existe para evitar NonUniqueObjectException
+<span class="fc" id="L31">        var existingEntityOpt = jpaRepository.findById(inventory.getProductSku());</span>
+        
+<span class="pc bpc" id="L33" title="1 of 2 branches missed.">        if (existingEntityOpt.isPresent()) {</span>
+            // Atualizar entidade existente
+<span class="nc" id="L35">            var existingEntity = existingEntityOpt.get();</span>
+<span class="nc" id="L36">            existingEntity.setProductName(inventory.getProductName());</span>
+<span class="nc" id="L37">            existingEntity.setDescription(inventory.getDescription());</span>
+<span class="nc" id="L38">            existingEntity.setCategory(inventory.getCategory());</span>
+<span class="nc" id="L39">            existingEntity.setUnitPrice(inventory.getUnitPrice());</span>
+<span class="nc" id="L40">            existingEntity.setTotalQuantity(inventory.getTotalQuantity());</span>
+<span class="nc" id="L41">            existingEntity.setTotalReservedQuantity(inventory.getTotalReservedQuantity());</span>
+<span class="nc" id="L42">            existingEntity.setAvailableQuantity(inventory.getAvailableQuantity());</span>
+<span class="nc" id="L43">            existingEntity.setLastUpdated(inventory.getLastUpdated());</span>
+<span class="nc" id="L44">            existingEntity.setVersion(inventory.getVersion());</span>
+<span class="nc" id="L45">            existingEntity.setActive(inventory.getActive());</span>
+<span class="nc" id="L46">            var savedEntity = jpaRepository.save(existingEntity);</span>
+<span class="nc" id="L47">            log.debug(&quot;🔄 Entidade central atualizada&quot;);</span>
+<span class="nc" id="L48">            return mapper.toDomain(savedEntity);</span>
+        } else {
+            // Criar nova entidade
+<span class="fc" id="L51">            var entity = mapper.toJpaEntity(inventory);</span>
+<span class="fc" id="L52">            var savedEntity = jpaRepository.save(entity);</span>
+<span class="fc" id="L53">            log.debug(&quot;🆕 Nova entidade central criada&quot;);</span>
+<span class="fc" id="L54">            return mapper.toDomain(savedEntity);</span>
+        }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Optional&lt;CentralInventory&gt; findByProductSku(String productSku) {
+<span class="fc" id="L61">        log.debug(&quot;🔍 Buscando inventário central: productSku={}&quot;, productSku);</span>
+<span class="fc" id="L62">        return jpaRepository.findById(productSku)</span>
+<span class="fc" id="L63">                .map(mapper::toDomain);</span>
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List&lt;CentralInventory&gt; findAll() {
+<span class="fc" id="L69">        log.debug(&quot;📋 Listando todos os inventários centrais&quot;);</span>
+<span class="fc" id="L70">        return jpaRepository.findAll().stream()</span>
+<span class="fc" id="L71">                .map(mapper::toDomain)</span>
+<span class="fc" id="L72">                .toList();</span>
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List&lt;CentralInventory&gt; findLowStock(Integer threshold) {
+<span class="fc" id="L78">        return jpaRepository.findLowStock(threshold).stream()</span>
+<span class="fc" id="L79">                .map(mapper::toDomain)</span>
+<span class="fc" id="L80">                .toList();</span>
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List&lt;CentralInventory&gt; findWithAvailableStock() {
+<span class="fc" id="L86">        return jpaRepository.findWithAvailableStock().stream()</span>
+<span class="fc" id="L87">                .map(mapper::toDomain)</span>
+<span class="fc" id="L88">                .toList();</span>
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List&lt;CentralInventory&gt; findActiveProducts() {
+<span class="fc" id="L94">        return jpaRepository.findAll().stream()</span>
+<span class="fc" id="L95">                .filter(e -&gt; Boolean.TRUE.equals(e.getActive()))</span>
+<span class="fc" id="L96">                .map(mapper::toDomain)</span>
+<span class="fc" id="L97">                .toList();</span>
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List&lt;CentralInventory&gt; findByCategory(String category) {
+<span class="fc" id="L103">        return jpaRepository.findByCategory(category).stream()</span>
+<span class="fc" id="L104">                .map(mapper::toDomain)</span>
+<span class="fc" id="L105">                .toList();</span>
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List&lt;CentralInventory&gt; findByProductNameContaining(String productName) {
+<span class="fc" id="L111">        return jpaRepository.findAll().stream()</span>
+<span class="pc bpc" id="L112" title="1 of 4 branches missed.">                .filter(e -&gt; e.getProductName() != null &amp;&amp; e.getProductName().contains(productName))</span>
+<span class="fc" id="L113">                .map(mapper::toDomain)</span>
+<span class="fc" id="L114">                .toList();</span>
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean existsByProductSku(String productSku) {
+<span class="fc" id="L120">        return jpaRepository.existsById(productSku);</span>
+    }
+
+    @Override
+    @Transactional
+    public Optional&lt;CentralInventory&gt; updateQuantities(String productSku, Integer totalQuantity, Integer totalReservedQuantity) {
+<span class="fc" id="L126">        var entityOpt = jpaRepository.findById(productSku);</span>
+<span class="fc bfc" id="L127" title="All 2 branches covered.">        if (entityOpt.isPresent()) {</span>
+<span class="fc" id="L128">            var entity = entityOpt.get();</span>
+<span class="fc" id="L129">            entity.setTotalQuantity(totalQuantity);</span>
+<span class="fc" id="L130">            entity.setTotalReservedQuantity(totalReservedQuantity);</span>
+<span class="fc" id="L131">            entity.setAvailableQuantity(totalQuantity - totalReservedQuantity);</span>
+<span class="fc" id="L132">            var saved = jpaRepository.save(entity);</span>
+<span class="fc" id="L133">            return Optional.of(mapper.toDomain(saved));</span>
+        }
+<span class="fc" id="L135">        return Optional.empty();</span>
+    }
+
+    @Override
+    @Transactional
+    public void deleteByProductSku(String productSku) {
+<span class="fc" id="L141">        jpaRepository.deleteById(productSku);</span>
+<span class="fc" id="L142">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

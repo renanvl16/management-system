@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>StoreInventory.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Central Inventory Service</a> &gt; <a href="index.source.html" class="el_package">com.inventory.management.central.domain.model</a> &gt; <span class="el_source">StoreInventory.java</span></div><h1>StoreInventory.java</h1><pre class="source lang-java linenums">package com.inventory.management.central.domain.model;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
+
+import java.time.LocalDateTime;
+
+/**
+ * Entidade de domínio representando o inventário por loja.
+ * 
+ * Mantém o controle detalhado do inventário de cada produto
+ * em uma loja específica, incluindo quantidades e histórico
+ * de atualizações.
+ * 
+ * @author Sistema de Gerenciamento de Inventário
+ * @version 1.0.0
+ * @since 1.0.0
+ */
+@Getter
+<span class="fc" id="L25">@Setter</span>
+<span class="pc" id="L26">@Builder</span>
+<span class="fc" id="L27">@NoArgsConstructor</span>
+<span class="fc" id="L28">@AllArgsConstructor</span>
+<span class="pc bpc" id="L29" title="5 of 14 branches missed.">@EqualsAndHashCode(onlyExplicitlyIncluded = true)</span>
+<span class="fc" id="L30">@ToString(includeFieldNames = true)</span>
+public class StoreInventory {
+    // Métodos customizados para o builder (Lombok permite isso via @Builder)
+    public static class StoreInventoryBuilder {
+        public StoreInventoryBuilder reservedQuantity(Integer reserved) {
+<span class="fc" id="L35">            this.reserved = reserved;</span>
+<span class="fc" id="L36">            return this;</span>
+        }
+        public StoreInventoryBuilder availableQuantity(Integer available) {
+<span class="fc" id="L39">            this.available = available;</span>
+<span class="fc" id="L40">            return this;</span>
+        }
+    }
+    // O builder do Lombok já cobre todos os campos, não é necessário duplicar manualmente
+    public Integer getReservedQuantity() {
+<span class="fc" id="L45">        return reserved;</span>
+    }
+
+    public Integer getAvailableQuantity() {
+<span class="fc" id="L49">        return available;</span>
+    }
+
+    public void setReservedQuantity(Integer reserved) {
+<span class="fc" id="L53">        this.reserved = reserved;</span>
+<span class="fc" id="L54">    }</span>
+    
+    /**
+     * SKU do produto.
+     */
+    @EqualsAndHashCode.Include
+<span class="fc" id="L60">    private String productSku;</span>
+<span class="fc" id="L61">    private String storeId;</span>
+    
+    /**
+     * Nome da loja.
+     */
+<span class="fc" id="L66">    private String storeName;</span>
+    
+    /**
+     * Localização da loja.
+     */
+<span class="fc" id="L71">    private String storeLocation;</span>
+    
+    /**
+     * Quantidade disponível na loja.
+     */
+<span class="fc" id="L76">    private Integer quantity;</span>
+    
+    /**
+     * Quantidade reservada na loja.
+     */
+<span class="fc" id="L81">    private Integer reserved;</span>
+    
+    /**
+     * Quantidade disponível para venda.
+     */
+<span class="fc" id="L86">    private Integer available;</span>
+    
+    /**
+     * Data da última atualização.
+     */
+<span class="fc" id="L91">    private LocalDateTime lastUpdated;</span>
+    
+    /**
+     * Versão para controle de concorrência otimista.
+     */
+<span class="fc" id="L96">    private Long version;</span>
+    
+    /**
+     * Data da última sincronização com a loja.
+     */
+<span class="fc" id="L101">    private LocalDateTime lastSyncTime;</span>
+    
+    /**
+     * Indica se os dados estão sincronizados.
+     */
+<span class="fc" id="L106">    private Boolean isSynchronized;</span>
+    
+    /**
+     * Calcula a quantidade disponível baseada na quantidade total e reservada.
+     */
+    public void calculateAvailableQuantity() {
+<span class="fc" id="L112">        this.available = this.quantity - this.reserved;</span>
+<span class="fc" id="L113">    }</span>
+    
+    /**
+     * Verifica se há estoque disponível na loja.
+     * 
+     * @return true se há estoque disponível
+     */
+    public boolean hasAvailableStock() {
+<span class="fc bfc" id="L121" title="All 4 branches covered.">        return available != null &amp;&amp; available &gt; 0;</span>
+    }
+    
+    /**
+     * Verifica se há estoque suficiente para uma quantidade específica.
+     * 
+     * @param requestedQuantity quantidade solicitada
+     * @return true se há estoque suficiente
+     */
+    public boolean hasStockAvailable(Integer requestedQuantity) {
+<span class="pc bpc" id="L131" title="2 of 4 branches missed.">        return available != null &amp;&amp; </span>
+               requestedQuantity != null &amp;&amp; 
+<span class="fc bfc" id="L133" title="All 2 branches covered.">               available &gt;= requestedQuantity;</span>
+    }
+    
+    /**
+     * Marca como sincronizado.
+     */
+    public void markAsSynchronized() {
+<span class="fc" id="L140">        this.isSynchronized = true;</span>
+<span class="fc" id="L141">        this.lastSyncTime = LocalDateTime.now();</span>
+<span class="fc" id="L142">    }</span>
+    
+    /**
+     * Marca como não sincronizado.
+     */
+    public void markAsUnsynchronized() {
+<span class="fc" id="L148">        this.isSynchronized = false;</span>
+<span class="fc" id="L149">    }</span>
+    
+    /**
+     * Cria uma nova instância com valores padrão.
+     * 
+     * @param productSku SKU do produto
+     * @param storeId identificador da loja
+     * @param storeName nome da loja
+     * @return nova instância
+     */
+    public static StoreInventory create(String productSku, String storeId, String storeName) {
+<span class="fc" id="L160">        return StoreInventory.builder()</span>
+<span class="fc" id="L161">                .productSku(productSku)</span>
+<span class="fc" id="L162">                .storeId(storeId)</span>
+<span class="fc" id="L163">                .storeName(storeName)</span>
+<span class="fc" id="L164">                .quantity(0)</span>
+<span class="fc" id="L165">                .reserved(0)</span>
+<span class="fc" id="L166">                .available(0)</span>
+<span class="fc" id="L167">                .lastUpdated(LocalDateTime.now())</span>
+<span class="fc" id="L168">                .isSynchronized(false)</span>
+<span class="fc" id="L169">                .build();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

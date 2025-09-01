@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>GlobalInventory.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Central Inventory Service</a> &gt; <a href="index.source.html" class="el_package">com.inventory.management.central.domain.model</a> &gt; <span class="el_source">GlobalInventory.java</span></div><h1>GlobalInventory.java</h1><pre class="source lang-java linenums">package com.inventory.management.central.domain.model;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
+
+import java.time.LocalDateTime;
+
+/**
+ * Entidade de domínio representando o inventário global consolidado.
+ * 
+ * Esta entidade mantém a visão consolidada do inventário de um produto
+ * através de todas as lojas do sistema, incluindo quantidades totais,
+ * reservadas e disponíveis para cada loja.
+ * 
+ * @author Sistema de Gerenciamento de Inventário
+ * @version 1.0.0
+ * @since 1.0.0
+ */
+@Getter
+<span class="fc" id="L25">@Setter</span>
+<span class="pc" id="L26">@Builder</span>
+<span class="fc" id="L27">@NoArgsConstructor</span>
+<span class="fc" id="L28">@AllArgsConstructor</span>
+<span class="pc bpc" id="L29" title="7 of 14 branches missed.">@EqualsAndHashCode(onlyExplicitlyIncluded = true)</span>
+<span class="fc" id="L30">@ToString(includeFieldNames = true)</span>
+public class GlobalInventory {
+    
+    /**
+     * SKU do produto (identificador único).
+     */
+    @EqualsAndHashCode.Include
+<span class="fc" id="L37">    private String productSku;</span>
+    
+    /**
+     * Nome do produto.
+     */
+<span class="fc" id="L42">    private String productName;</span>
+    
+    /**
+     * Descrição do produto.
+     */
+<span class="fc" id="L47">    private String description;</span>
+    
+    /**
+     * Categoria do produto.
+     */
+<span class="fc" id="L52">    private String category;</span>
+    
+    /**
+     * Preço unitário do produto.
+     */
+<span class="fc" id="L57">    private Double unitPrice;</span>
+    
+    /**
+     * Quantidade total disponível em todas as lojas.
+     */
+<span class="fc" id="L62">    private Integer totalQuantity;</span>
+    
+    /**
+     * Quantidade total reservada em todas as lojas.
+     */
+<span class="fc" id="L67">    private Integer totalReservedQuantity;</span>
+    
+    /**
+     * Quantidade total disponível para venda (total - reservado).
+     */
+<span class="fc" id="L72">    private Integer availableQuantity;</span>
+    
+    /**
+     * Data da última atualização.
+     */
+<span class="fc" id="L77">    private LocalDateTime lastUpdated;</span>
+    
+    /**
+     * Versão para controle de concorrência otimista.
+     */
+<span class="fc" id="L82">    private Long version;</span>
+    
+    /**
+     * Indica se o produto está ativo no sistema.
+     */
+<span class="fc" id="L87">    private Boolean active;</span>
+    
+    /**
+     * Calcula a quantidade disponível baseada no total e reservado.
+     */
+    public void calculateAvailableQuantity() {
+<span class="fc" id="L93">        this.availableQuantity = this.totalQuantity - this.totalReservedQuantity;</span>
+<span class="fc" id="L94">    }</span>
+    
+    /**
+     * Verifica se o produto tem estoque disponível.
+     * 
+     * @return true se há estoque disponível
+     */
+    public boolean hasAvailableStock() {
+<span class="fc bfc" id="L102" title="All 4 branches covered.">        return availableQuantity != null &amp;&amp; availableQuantity &gt; 0;</span>
+    }
+    
+    /**
+     * Verifica se o produto tem estoque suficiente para uma quantidade específica.
+     * 
+     * @param requestedQuantity quantidade solicitada
+     * @return true se há estoque suficiente
+     */
+    public boolean hasStockAvailable(Integer requestedQuantity) {
+<span class="fc bfc" id="L112" title="All 4 branches covered.">        return availableQuantity != null &amp;&amp; </span>
+               requestedQuantity != null &amp;&amp; 
+<span class="fc bfc" id="L114" title="All 2 branches covered.">               availableQuantity &gt;= requestedQuantity;</span>
+    }
+    
+    /**
+     * Cria uma nova instância com valores padrão.
+     * 
+     * @param productSku SKU do produto
+     * @param productName nome do produto
+     * @return nova instância
+     */
+    public static GlobalInventory create(String productSku, String productName) {
+<span class="fc" id="L125">        return GlobalInventory.builder()</span>
+<span class="fc" id="L126">                .productSku(productSku)</span>
+<span class="fc" id="L127">                .productName(productName)</span>
+<span class="fc" id="L128">                .totalQuantity(0)</span>
+<span class="fc" id="L129">                .totalReservedQuantity(0)</span>
+<span class="fc" id="L130">                .availableQuantity(0)</span>
+<span class="fc" id="L131">                .lastUpdated(LocalDateTime.now())</span>
+<span class="fc" id="L132">                .active(true)</span>
+<span class="fc" id="L133">                .build();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

@@ -1,0 +1,194 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>GetCentralInventoryUseCase.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Central Inventory Service</a> &gt; <a href="index.source.html" class="el_package">com.inventory.management.central.application.usecase</a> &gt; <span class="el_source">GetCentralInventoryUseCase.java</span></div><h1>GetCentralInventoryUseCase.java</h1><pre class="source lang-java linenums">package com.inventory.management.central.application.usecase;
+
+import com.inventory.management.central.domain.model.CentralInventory;
+import com.inventory.management.central.domain.port.CentralInventoryRepository;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.Optional;
+
+/**
+ * Caso de uso para consultas do inventário central.
+ * 
+ * Este serviço fornece APIs centralizadas para consulta
+ * do inventário consolidado de todas as lojas.
+ * 
+ * @author Sistema de Gerenciamento de Inventário
+ * @version 1.0.0
+ * @since 1.0.0
+ */
+@Service
+<span class="fc" id="L23">@RequiredArgsConstructor</span>
+<span class="fc" id="L24">@Slf4j</span>
+public class GetCentralInventoryUseCase {
+    
+    private final CentralInventoryRepository centralInventoryRepository;
+    
+    /**
+     * Busca inventário central por SKU.
+     * 
+     * @param productSku SKU do produto
+     * @return inventário central encontrado
+     */
+    public Optional&lt;CentralInventory&gt; getByProductSku(String productSku) {
+<span class="fc" id="L36">        log.debug(&quot;🔍 Buscando inventário central: productSku={}&quot;, productSku);</span>
+        
+<span class="fc bfc" id="L38" title="All 4 branches covered.">        if (productSku == null || productSku.trim().isEmpty()) {</span>
+<span class="fc" id="L39">            log.warn(&quot;⚠️  SKU inválido fornecido&quot;);</span>
+<span class="fc" id="L40">            return Optional.empty();</span>
+        }
+        
+<span class="fc" id="L43">        Optional&lt;CentralInventory&gt; inventory = centralInventoryRepository.findByProductSku(productSku.trim());</span>
+        
+<span class="fc bfc" id="L45" title="All 2 branches covered.">        if (inventory.isPresent()) {</span>
+<span class="fc" id="L46">            log.debug(&quot;✅ Inventário encontrado: productSku={}, disponível={}&quot;, </span>
+<span class="fc" id="L47">                    productSku, inventory.get().getAvailableQuantity());</span>
+        } else {
+<span class="fc" id="L49">            log.debug(&quot;❌ Inventário não encontrado: productSku={}&quot;, productSku);</span>
+        }
+        
+<span class="fc" id="L52">        return inventory;</span>
+    }
+    
+    /**
+     * Lista todos os inventários centrais.
+     * 
+     * @return lista de inventários
+     */
+    public List&lt;CentralInventory&gt; getAllInventories() {
+<span class="fc" id="L61">        log.debug(&quot;📋 Listando todos os inventários centrais&quot;);</span>
+        
+<span class="fc" id="L63">        List&lt;CentralInventory&gt; inventories = centralInventoryRepository.findAll();</span>
+        
+<span class="fc" id="L65">        log.debug(&quot;✅ {} inventários encontrados&quot;, inventories.size());</span>
+<span class="fc" id="L66">        return inventories;</span>
+    }
+    
+    /**
+     * Lista apenas produtos ativos.
+     * 
+     * @return lista de produtos ativos
+     */
+    public List&lt;CentralInventory&gt; getActiveProducts() {
+<span class="fc" id="L75">        log.debug(&quot;📋 Listando produtos ativos&quot;);</span>
+        
+<span class="fc" id="L77">        List&lt;CentralInventory&gt; inventories = centralInventoryRepository.findActiveProducts();</span>
+        
+<span class="fc" id="L79">        log.debug(&quot;✅ {} produtos ativos encontrados&quot;, inventories.size());</span>
+<span class="fc" id="L80">        return inventories;</span>
+    }
+    
+    /**
+     * Lista produtos com estoque disponível.
+     * 
+     * @return lista de produtos com estoque
+     */
+    public List&lt;CentralInventory&gt; getProductsWithStock() {
+<span class="fc" id="L89">        log.debug(&quot;📦 Listando produtos com estoque disponível&quot;);</span>
+        
+<span class="fc" id="L91">        List&lt;CentralInventory&gt; inventories = centralInventoryRepository.findWithAvailableStock();</span>
+        
+<span class="fc" id="L93">        log.debug(&quot;✅ {} produtos com estoque encontrados&quot;, inventories.size());</span>
+<span class="fc" id="L94">        return inventories;</span>
+    }
+    
+    /**
+     * Lista produtos com estoque baixo.
+     * 
+     * @param threshold limite mínimo de estoque
+     * @return lista de produtos com estoque baixo
+     */
+    public List&lt;CentralInventory&gt; getLowStockProducts(Integer threshold) {
+<span class="fc" id="L104">        log.debug(&quot;⚠️  Listando produtos com estoque baixo: threshold={}&quot;, threshold);</span>
+        
+<span class="fc bfc" id="L106" title="All 4 branches covered.">        if (threshold == null || threshold &lt; 0) {</span>
+<span class="fc" id="L107">            threshold = 10; // valor padrão</span>
+        }
+        
+<span class="fc" id="L110">        List&lt;CentralInventory&gt; inventories = centralInventoryRepository.findLowStock(threshold);</span>
+        
+<span class="fc" id="L112">        log.debug(&quot;⚠️  {} produtos com estoque baixo encontrados&quot;, inventories.size());</span>
+<span class="fc" id="L113">        return inventories;</span>
+    }
+    
+    /**
+     * Lista produtos por categoria.
+     * 
+     * @param category categoria do produto
+     * @return lista de produtos da categoria
+     */
+    public List&lt;CentralInventory&gt; getProductsByCategory(String category) {
+<span class="fc" id="L123">        log.debug(&quot;📂 Listando produtos por categoria: category={}&quot;, category);</span>
+        
+<span class="fc bfc" id="L125" title="All 4 branches covered.">        if (category == null || category.trim().isEmpty()) {</span>
+<span class="fc" id="L126">            log.warn(&quot;⚠️  Categoria inválida fornecida&quot;);</span>
+<span class="fc" id="L127">            return List.of();</span>
+        }
+        
+<span class="fc" id="L130">        List&lt;CentralInventory&gt; inventories = centralInventoryRepository.findByCategory(category.trim());</span>
+        
+<span class="fc" id="L132">        log.debug(&quot;✅ {} produtos da categoria {} encontrados&quot;, inventories.size(), category);</span>
+<span class="fc" id="L133">        return inventories;</span>
+    }
+    
+    /**
+     * Busca produtos por nome (busca parcial).
+     * 
+     * @param productName nome do produto
+     * @return lista de produtos encontrados
+     */
+    public List&lt;CentralInventory&gt; searchByProductName(String productName) {
+<span class="fc" id="L143">        log.debug(&quot;🔍 Buscando produtos por nome: productName={}&quot;, productName);</span>
+        
+<span class="fc bfc" id="L145" title="All 4 branches covered.">        if (productName == null || productName.trim().isEmpty()) {</span>
+<span class="fc" id="L146">            log.warn(&quot;⚠️  Nome de produto inválido fornecido&quot;);</span>
+<span class="fc" id="L147">            return List.of();</span>
+        }
+        
+<span class="fc" id="L150">        List&lt;CentralInventory&gt; inventories = </span>
+<span class="fc" id="L151">                centralInventoryRepository.findByProductNameContaining(productName.trim());</span>
+        
+<span class="fc" id="L153">        log.debug(&quot;✅ {} produtos encontrados com nome contendo '{}'&quot;, </span>
+<span class="fc" id="L154">                inventories.size(), productName);</span>
+<span class="fc" id="L155">        return inventories;</span>
+    }
+    
+    /**
+     * Verifica disponibilidade de estoque para um produto.
+     * 
+     * @param productSku SKU do produto
+     * @param requestedQuantity quantidade solicitada
+     * @return true se há estoque disponível
+     */
+    public boolean checkStockAvailability(String productSku, Integer requestedQuantity) {
+<span class="fc" id="L166">        log.debug(&quot;🔍 Verificando disponibilidade: productSku={}, quantidade={}&quot;, </span>
+                productSku, requestedQuantity);
+        
+<span class="pc bpc" id="L169" title="3 of 6 branches missed.">        if (productSku == null || productSku.trim().isEmpty() || </span>
+<span class="fc bfc" id="L170" title="All 2 branches covered.">            requestedQuantity == null || requestedQuantity &lt;= 0) {</span>
+<span class="fc" id="L171">            log.warn(&quot;⚠️  Parâmetros inválidos para verificação de estoque&quot;);</span>
+<span class="fc" id="L172">            return false;</span>
+        }
+        
+<span class="fc" id="L175">        Optional&lt;CentralInventory&gt; inventory = getByProductSku(productSku);</span>
+        
+<span class="fc bfc" id="L177" title="All 2 branches covered.">        if (inventory.isEmpty()) {</span>
+<span class="fc" id="L178">            log.debug(&quot;❌ Produto não encontrado: productSku={}&quot;, productSku);</span>
+<span class="fc" id="L179">            return false;</span>
+        }
+        
+<span class="fc" id="L182">        boolean available = inventory.get().hasStockAvailable(requestedQuantity);</span>
+        
+<span class="fc" id="L184">        log.debug(&quot;{} Estoque {}: productSku={}, solicitado={}, disponível={}&quot;, </span>
+<span class="fc bfc" id="L185" title="All 2 branches covered.">                available ? &quot;✅&quot; : &quot;❌&quot;,</span>
+<span class="fc bfc" id="L186" title="All 2 branches covered.">                available ? &quot;disponível&quot; : &quot;insuficiente&quot;,</span>
+                productSku, 
+                requestedQuantity, 
+<span class="fc" id="L189">                inventory.get().getAvailableQuantity());</span>
+        
+<span class="fc" id="L191">        return available;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

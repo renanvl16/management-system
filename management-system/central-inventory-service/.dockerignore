@@ -1,0 +1,15 @@
+*.log
+.git/
+.gitignore
+README.md
+*.md
+.DS_Store
+.env
+.env.*
+temp_tests/
+*.iml
+.idea/
+.vscode/
+*.swp
+*.swo
+*~

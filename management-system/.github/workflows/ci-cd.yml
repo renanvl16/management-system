@@ -1,0 +1,301 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+env:
+  REGISTRY: docker.io
+  STORE_SERVICE_IMAGE: inventory/store-service
+  CENTRAL_SERVICE_IMAGE: inventory/central-inventory-service
+
+jobs:
+  # Test Phase
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_DB: testdb
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      
+      redis:
+        image: redis:7.2-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up JDK 21
+      uses: actions/setup-java@v4
+      with:
+        java-version: '21'
+        distribution: 'temurin'
+
+    - name: Cache Maven dependencies
+      uses: actions/cache@v4
+      with:
+        path: ~/.m2
+        key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+        restore-keys: ${{ runner.os }}-m2
+
+    - name: Run Store Service tests
+      run: |
+        cd store-service
+        mvn clean test -Dspring.profiles.active=test
+      env:
+        SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/testdb
+        SPRING_DATASOURCE_USERNAME: test
+        SPRING_DATASOURCE_PASSWORD: test
+        SPRING_DATA_REDIS_HOST: localhost
+        SPRING_DATA_REDIS_PORT: 6379
+
+    - name: Run Central Inventory Service tests
+      run: |
+        cd central-inventory-service
+        mvn clean test -Dspring.profiles.active=test
+      env:
+        SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/testdb
+        SPRING_DATASOURCE_USERNAME: test
+        SPRING_DATASOURCE_PASSWORD: test
+        SPRING_DATA_REDIS_HOST: localhost
+        SPRING_DATA_REDIS_PORT: 6379
+
+    - name: Generate test reports
+      uses: dorny/test-reporter@v1
+      if: success() || failure()
+      with:
+        name: Maven Tests
+        path: '**/target/surefire-reports/*.xml'
+        reporter: java-junit
+
+  # Quality Analysis
+  quality:
+    name: Code Quality Analysis
+    runs-on: ubuntu-latest
+    needs: test
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Set up JDK 21
+      uses: actions/setup-java@v4
+      with:
+        java-version: '21'
+        distribution: 'temurin'
+
+    - name: Cache Maven dependencies
+      uses: actions/cache@v4
+      with:
+        path: ~/.m2
+        key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+
+    - name: Run SonarQube analysis
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      run: |
+        cd store-service
+        mvn clean verify sonar:sonar \
+          -Dsonar.projectKey=inventory-management-store \
+          -Dsonar.organization=your-org \
+          -Dsonar.host.url=https://sonarcloud.io \
+          -Dsonar.login=$SONAR_TOKEN
+        
+        cd ../central-inventory-service
+        mvn clean verify sonar:sonar \
+          -Dsonar.projectKey=inventory-management-central \
+          -Dsonar.organization=your-org \
+          -Dsonar.host.url=https://sonarcloud.io \
+          -Dsonar.login=$SONAR_TOKEN
+
+  # Integration Tests
+  integration-test:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: test
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Build application images
+      run: |
+        docker-compose build store-service central-inventory-service
+
+    - name: Start infrastructure services
+      run: |
+        docker-compose up -d postgres redis kafka zookeeper
+        sleep 60
+
+    - name: Run integration tests
+      run: |
+        ./scripts/test-complete.sh
+      env:
+        CI: true
+
+    - name: Cleanup
+      if: always()
+      run: docker-compose down -v
+
+  # Build and Push Images
+  build:
+    name: Build and Push Images
+    runs-on: ubuntu-latest
+    needs: [test, quality, integration-test]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Log in to Docker Hub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+
+    - name: Extract metadata for Store Service
+      id: meta-store
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ env.STORE_SERVICE_IMAGE }}
+        tags: |
+          type=ref,event=branch
+          type=ref,event=pr
+          type=sha,prefix={{branch}}-
+          type=raw,value=latest,enable={{is_default_branch}}
+
+    - name: Build and push Store Service
+      uses: docker/build-push-action@v5
+      with:
+        context: ./store-service
+        push: true
+        tags: ${{ steps.meta-store.outputs.tags }}
+        labels: ${{ steps.meta-store.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+    - name: Extract metadata for Central Service
+      id: meta-central
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ env.CENTRAL_SERVICE_IMAGE }}
+        tags: |
+          type=ref,event=branch
+          type=ref,event=pr
+          type=sha,prefix={{branch}}-
+          type=raw,value=latest,enable={{is_default_branch}}
+
+    - name: Build and push Central Service
+      uses: docker/build-push-action@v5
+      with:
+        context: ./central-inventory-service
+        push: true
+        tags: ${{ steps.meta-central.outputs.tags }}
+        labels: ${{ steps.meta-central.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+  # Deploy to Kubernetes
+  deploy:
+    name: Deploy to Kubernetes
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    environment: production
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Configure kubectl
+      uses: azure/k8s-set-context@v3
+      with:
+        method: kubeconfig
+        kubeconfig: ${{ secrets.KUBE_CONFIG }}
+
+    - name: Update image tags in manifests
+      run: |
+        # Update Store Service image tag
+        sed -i "s|inventory/store-service:latest|${{ env.STORE_SERVICE_IMAGE }}:${{ github.sha }}|g" k8s/store-service.yaml
+        
+        # Update Central Service image tag
+        sed -i "s|inventory/central-inventory-service:1.0.0|${{ env.CENTRAL_SERVICE_IMAGE }}:${{ github.sha }}|g" k8s/central-inventory-service.yaml
+
+    - name: Deploy to Kubernetes
+      run: |
+        kubectl apply -f k8s/namespace.yaml
+        kubectl apply -f k8s/postgres.yaml
+        kubectl apply -f k8s/redis.yaml
+        kubectl apply -f k8s/store-service.yaml
+        kubectl apply -f k8s/central-inventory-service.yaml
+
+    - name: Wait for deployment
+      run: |
+        kubectl rollout status deployment/store-service -n inventory-system --timeout=300s
+        kubectl rollout status deployment/central-inventory-service -n inventory-system --timeout=300s
+
+    - name: Run smoke tests
+      run: |
+        # Port forward for testing
+        kubectl port-forward -n inventory-system svc/store-service 8081:8081 &
+        kubectl port-forward -n inventory-system svc/central-inventory-service 8082:8082 &
+        sleep 30
+        
+        # Run basic health checks
+        curl -f http://localhost:8081/store-service/actuator/health || exit 1
+        curl -f http://localhost:8082/central-inventory-service/actuator/health || exit 1
+
+  # Security Scan
+  security:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.event_name == 'push'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        image-ref: '${{ env.STORE_SERVICE_IMAGE }}:latest'
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+
+    - name: Upload Trivy scan results to GitHub Security tab
+      uses: github/codeql-action/upload-sarif@v3
+      if: always()
+      with:
+        sarif_file: 'trivy-results.sarif'

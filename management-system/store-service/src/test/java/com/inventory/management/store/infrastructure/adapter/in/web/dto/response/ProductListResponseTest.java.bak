@@ -1,0 +1,335 @@
+package com.inventory.management.store.infrastructure.adapter.in.web.dto.response;
+
+import com.inventory.management.store.application.dto.response.SearchProductsResponse;
+import com.inventory.management.store.domain.model.Product;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.*;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+/**
+ * Testes unitários para ProductListResponse.
+ * 
+ * @author Sistema de Gerenciamento de Inventário
+ * @version 1.0.0
+ * @since 1.0.0
+ */
+@DisplayName("ProductListResponse Tests")
+class ProductListResponseTest {
+
+    private static final String TEST_MESSAGE = "Test message";
+    private static final String PRODUCTS_FOUND_MESSAGE = "Produtos encontrados";
+
+    @Nested
+    @DisplayName("Constructor Tests")
+    class ConstructorTests {
+
+        @Test
+        @DisplayName("Deve criar ProductListResponse com construtor vazio")
+        void shouldCreateWithNoArgsConstructor() {
+            // When
+            ProductListResponse response = new ProductListResponse();
+            
+            // Then
+            assertNotNull(response);
+            assertFalse(response.isSuccess());
+            assertNull(response.getProducts());
+            assertEquals(0, response.getTotalFound());
+            assertNull(response.getMessage());
+        }
+
+        @Test
+        @DisplayName("Deve criar ProductListResponse com construtor completo")
+        void shouldCreateWithAllArgsConstructor() {
+            // Given
+            boolean success = true;
+            List<Product> products = createTestProducts();
+            int totalFound = products.size();
+            String message = TEST_MESSAGE;
+            
+            // When
+            ProductListResponse response = new ProductListResponse(success, products, totalFound, message);
+            
+            // Then
+            assertNotNull(response);
+            assertTrue(response.isSuccess());
+            assertEquals(products, response.getProducts());
+            assertEquals(totalFound, response.getTotalFound());
+            assertEquals(message, response.getMessage());
+        }
+    }
+
+    @Nested
+    @DisplayName("Factory Methods Tests")
+    class FactoryMethodsTests {
+
+        @Test
+        @DisplayName("Deve criar ProductListResponse a partir de SearchProductsResponse")
+        void shouldCreateFromSearchProductsResponse() {
+            // Given
+            List<Product> products = createTestProducts();
+            SearchProductsResponse source = SearchProductsResponse.builder()
+                .success(true)
+                .products(products)
+                .totalFound(products.size())
+                .message(PRODUCTS_FOUND_MESSAGE)
+                .build();
+            
+            // When
+            ProductListResponse response = ProductListResponse.from(source);
+            
+            // Then
+            assertNotNull(response);
+            assertTrue(response.isSuccess());
+            assertEquals(products, response.getProducts());
+            assertEquals(products.size(), response.getTotalFound());
+            assertEquals(PRODUCTS_FOUND_MESSAGE, response.getMessage());
+        }
+
+        @Test
+        @DisplayName("Deve criar ProductListResponse de erro")
+        void shouldCreateErrorResponse() {
+            // Given
+            String errorMessage = "Erro na busca de produtos";
+            
+            // When
+            ProductListResponse response = ProductListResponse.error(errorMessage);
+            
+            // Then
+            assertNotNull(response);
+            assertFalse(response.isSuccess());
+            assertNotNull(response.getProducts());
+            assertTrue(response.getProducts().isEmpty());
+            assertEquals(0, response.getTotalFound());
+            assertEquals(errorMessage, response.getMessage());
+        }
+
+        @Test
+        @DisplayName("Deve criar ProductListResponse de erro com null message")
+        void shouldCreateErrorResponseWithNullMessage() {
+            // When
+            ProductListResponse response = ProductListResponse.error(null);
+            
+            // Then
+            assertNotNull(response);
+            assertFalse(response.isSuccess());
+            assertNotNull(response.getProducts());
+            assertTrue(response.getProducts().isEmpty());
+            assertEquals(0, response.getTotalFound());
+            assertNull(response.getMessage());
+        }
+
+        @Test
+        @DisplayName("Deve criar ProductListResponse from com null products")
+        void shouldCreateFromWithNullProducts() {
+            // Given
+            SearchProductsResponse source = SearchProductsResponse.builder()
+                .success(true)
+                .products(null)
+                .totalFound(0)
+                .message("Nenhum produto encontrado")
+                .build();
+            
+            // When
+            ProductListResponse response = ProductListResponse.from(source);
+            
+            // Then
+            assertNotNull(response);
+            assertTrue(response.isSuccess());
+            assertNull(response.getProducts());
+            assertEquals(0, response.getTotalFound());
+            assertEquals("Nenhum produto encontrado", response.getMessage());
+        }
+    }
+
+    @Nested
+    @DisplayName("Object Behavior Tests")
+    class ObjectBehaviorTests {
+
+        @Test
+        @DisplayName("Deve implementar equals e hashCode corretamente")
+        void shouldImplementEqualsAndHashCode() {
+            // Given
+            List<Product> products = createTestProducts();
+            ProductListResponse response1 = new ProductListResponse(true, products, products.size(), TEST_MESSAGE);
+            ProductListResponse response2 = new ProductListResponse(true, products, products.size(), TEST_MESSAGE);
+            ProductListResponse response3 = new ProductListResponse(false, List.of(), 0, "Different message");
+            
+            // Then
+            assertEquals(response1, response2);
+            assertEquals(response1.hashCode(), response2.hashCode());
+            assertNotEquals(response1, response3);
+            assertNotEquals(response1.hashCode(), response3.hashCode());
+        }
+
+        @Test
+        @DisplayName("Deve implementar toString corretamente")
+        void shouldImplementToString() {
+            // Given
+            List<Product> products = createTestProducts();
+            ProductListResponse response = new ProductListResponse(true, products, products.size(), PRODUCTS_FOUND_MESSAGE);
+            
+            // When
+            String toString = response.toString();
+            
+            // Then
+            assertNotNull(toString);
+            assertTrue(toString.contains("success=true"));
+            assertTrue(toString.contains("totalFound=" + products.size()));
+            assertTrue(toString.contains("message=Produtos encontrados"));
+            assertTrue(toString.contains("products=" + products.toString()));
+        }
+
+        @Test
+        @DisplayName("Deve permitir modificação dos campos")
+        void shouldAllowFieldModification() {
+            // Given
+            ProductListResponse response = new ProductListResponse();
+            List<Product> newProducts = createTestProducts();
+            
+            // When
+            response.setSuccess(true);
+            response.setProducts(newProducts);
+            response.setTotalFound(newProducts.size());
+            response.setMessage("Modified message");
+            
+            // Then
+            assertTrue(response.isSuccess());
+            assertEquals(newProducts, response.getProducts());
+            assertEquals(newProducts.size(), response.getTotalFound());
+            assertEquals("Modified message", response.getMessage());
+        }
+    }
+
+    @Nested
+    @DisplayName("Edge Cases Tests")
+    class EdgeCasesTests {
+
+        @Test
+        @DisplayName("Deve lidar com lista vazia")
+        void shouldHandleEmptyList() {
+            // Given
+            List<Product> emptyList = new ArrayList<>();
+            
+            // When
+            ProductListResponse response = new ProductListResponse(true, emptyList, 0, "Lista vazia");
+            
+            // Then
+            assertTrue(response.isSuccess());
+            assertNotNull(response.getProducts());
+            assertTrue(response.getProducts().isEmpty());
+            assertEquals(0, response.getTotalFound());
+            assertEquals("Lista vazia", response.getMessage());
+        }
+
+        @Test
+        @DisplayName("Deve lidar com strings vazias")
+        void shouldHandleEmptyStrings() {
+            // Given
+            ProductListResponse response = new ProductListResponse(true, List.of(), 0, "");
+            
+            // Then
+            assertEquals("", response.getMessage());
+        }
+
+        @Test
+        @DisplayName("Deve lidar com todos os campos null")
+        void shouldHandleAllNullFields() {
+            // Given
+            ProductListResponse response = new ProductListResponse(false, null, 0, null);
+            
+            // Then
+            assertFalse(response.isSuccess());
+            assertNull(response.getProducts());
+            assertEquals(0, response.getTotalFound());
+            assertNull(response.getMessage());
+        }
+
+        @Test
+        @DisplayName("Deve lidar com totalFound inconsistente")
+        void shouldHandleInconsistentTotalFound() {
+            // Given
+            List<Product> products = createTestProducts();
+            int inconsistentTotal = products.size() + 10;
+            
+            // When
+            ProductListResponse response = new ProductListResponse(true, products, inconsistentTotal, "Inconsistent");
+            
+            // Then
+            assertTrue(response.isSuccess());
+            assertEquals(products, response.getProducts());
+            assertEquals(inconsistentTotal, response.getTotalFound());
+            assertEquals("Inconsistent", response.getMessage());
+        }
+
+        @Test
+        @DisplayName("Deve lidar com totalFound negativo")
+        void shouldHandleNegativeTotalFound() {
+            // Given
+            List<Product> products = createTestProducts();
+            int negativTotal = -1;
+            
+            // When
+            ProductListResponse response = new ProductListResponse(true, products, negativTotal, "Negative total");
+            
+            // Then
+            assertTrue(response.isSuccess());
+            assertEquals(products, response.getProducts());
+            assertEquals(negativTotal, response.getTotalFound());
+            assertEquals("Negative total", response.getMessage());
+        }
+
+        @Test
+        @DisplayName("Deve lidar com lista grande")
+        void shouldHandleLargeList() {
+            // Given
+            List<Product> largeList = new ArrayList<>();
+            for (int i = 0; i < 1000; i++) {
+                largeList.add(createTestProduct("SKU-" + i, "Product " + i));
+            }
+            
+            // When
+            ProductListResponse response = new ProductListResponse(true, largeList, largeList.size(), "Large list");
+            
+            // Then
+            assertTrue(response.isSuccess());
+            assertEquals(largeList, response.getProducts());
+            assertEquals(1000, response.getTotalFound());
+            assertEquals("Large list", response.getMessage());
+        }
+    }
+
+    /**
+     * Cria uma lista de produtos de teste.
+     */
+    private List<Product> createTestProducts() {
+        return Arrays.asList(
+            createTestProduct("SKU-001", "Product 1"),
+            createTestProduct("SKU-002", "Product 2"),
+            createTestProduct("SKU-003", "Product 3")
+        );
+    }
+
+    /**
+     * Cria um produto de teste com SKU e nome personalizados.
+     */
+    private Product createTestProduct(String sku, String name) {
+        return Product.builder()
+            .id(UUID.randomUUID())
+            .sku(sku)
+            .name(name)
+            .description("Test Description for " + name)
+            .price(new BigDecimal("19.99"))
+            .quantity(100)
+            .reservedQuantity(10)
+            .lastUpdated(LocalDateTime.now())
+            .storeId("STORE-001")
+            .active(true)
+            .build();
+    }
+}

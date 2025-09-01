@@ -1,0 +1,101 @@
+name: Deploy to Staging
+
+on:
+  push:
+    branches: [develop]
+
+env:
+  REGISTRY: docker.io
+  STORE_SERVICE_IMAGE: inventory/store-service
+  CENTRAL_SERVICE_IMAGE: inventory/central-inventory-service
+
+jobs:
+  deploy-staging:
+    name: Deploy to Staging Environment
+    runs-on: ubuntu-latest
+    environment: staging
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up JDK 21
+      uses: actions/setup-java@v4
+      with:
+        java-version: '21'
+        distribution: 'temurin'
+
+    - name: Cache Maven dependencies
+      uses: actions/cache@v4
+      with:
+        path: ~/.m2
+        key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+
+    - name: Build applications
+      run: |
+        cd store-service && mvn clean package -DskipTests
+        cd ../central-inventory-service && mvn clean package -DskipTests
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Log in to Docker Hub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+
+    - name: Build and push staging images
+      run: |
+        # Build Store Service
+        docker build -t ${{ env.STORE_SERVICE_IMAGE }}:staging-${{ github.sha }} ./store-service
+        docker push ${{ env.STORE_SERVICE_IMAGE }}:staging-${{ github.sha }}
+        
+        # Build Central Service
+        docker build -t ${{ env.CENTRAL_SERVICE_IMAGE }}:staging-${{ github.sha }} ./central-inventory-service
+        docker push ${{ env.CENTRAL_SERVICE_IMAGE }}:staging-${{ github.sha }}
+
+    - name: Configure kubectl for staging
+      uses: azure/k8s-set-context@v3
+      with:
+        method: kubeconfig
+        kubeconfig: ${{ secrets.KUBE_CONFIG_STAGING }}
+
+    - name: Deploy to staging namespace
+      run: |
+        # Create staging namespace
+        kubectl create namespace inventory-staging --dry-run=client -o yaml | kubectl apply -f -
+        
+        # Update image tags for staging
+        sed -i "s|inventory/store-service:latest|${{ env.STORE_SERVICE_IMAGE }}:staging-${{ github.sha }}|g" k8s/store-service.yaml
+        sed -i "s|inventory/central-inventory-service:1.0.0|${{ env.CENTRAL_SERVICE_IMAGE }}:staging-${{ github.sha }}|g" k8s/central-inventory-service.yaml
+        
+        # Apply manifests to staging namespace
+        kubectl apply -f k8s/postgres.yaml -n inventory-staging
+        kubectl apply -f k8s/redis.yaml -n inventory-staging
+        kubectl apply -f k8s/store-service.yaml -n inventory-staging
+        kubectl apply -f k8s/central-inventory-service.yaml -n inventory-staging
+
+    - name: Wait for staging deployment
+      run: |
+        kubectl rollout status deployment/store-service -n inventory-staging --timeout=300s
+        kubectl rollout status deployment/central-inventory-service -n inventory-staging --timeout=300s
+
+    - name: Run staging tests
+      run: |
+        # Get staging service URLs
+        STORE_URL=$(kubectl get svc store-service -n inventory-staging -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+        CENTRAL_URL=$(kubectl get svc central-inventory-service -n inventory-staging -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+        
+        # Run health checks
+        curl -f http://$STORE_URL:8081/store-service/actuator/health || exit 1
+        curl -f http://$CENTRAL_URL:8082/central-inventory-service/actuator/health || exit 1
+
+    - name: Notify deployment status
+      uses: 8398a7/action-slack@v3
+      if: always()
+      with:
+        status: ${{ job.status }}
+        text: "Staging deployment ${{ job.status }} for commit ${{ github.sha }}"
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}

@@ -1,0 +1,140 @@
+spring:
+  application:
+    name: central-inventory-service
+    
+  profiles:
+    active: local
+    
+  # Database Configuration (PostgreSQL sempre)
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://postgres:5432/inventory_db}
+    driver-class-name: ${DATABASE_DRIVER:org.postgresql.Driver}
+    username: ${DATABASE_USERNAME:inventory_user}
+    password: ${DATABASE_PASSWORD:inventory_password}
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+      connection-timeout: 30000
+    
+  # JPA Configuration
+  jpa:
+    database-platform: ${DATABASE_PLATFORM:org.hibernate.dialect.PostgreSQLDialect}
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: false
+        
+  # Kafka Configuration  
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:kafka:29092}
+    consumer:
+      group-id: ${app.kafka.consumer.group-id:central-inventory-group}
+      client-id: ${spring.application.name}-consumer
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      enable-auto-commit: false
+      # Configurações de resiliência
+      session-timeout-ms: 30000
+      heartbeat-interval-ms: 3000
+      max-poll-records: 10
+      max-poll-interval-ms: 300000
+      fetch-min-bytes: 1
+      fetch-max-wait-ms: 5000
+      
+  # Redis Configuration
+  data:
+    redis:
+      host: ${REDIS_HOST:redis}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:inventorypass123}
+      timeout: 2000ms
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+
+# Resilience4j Configuration
+resilience4j:
+  circuitbreaker:
+    instances:
+      kafka-consumer:
+        failure-rate-threshold: 60
+        wait-duration-in-open-state: 30000ms
+        sliding-window-size: 10
+        minimum-number-of-calls: 5
+        slow-call-rate-threshold: 80
+        slow-call-duration-threshold: 5000ms
+        permitted-number-of-calls-in-half-open-state: 3
+      database:
+        failure-rate-threshold: 40
+        wait-duration-in-open-state: 90000ms
+        sliding-window-size: 15
+        minimum-number-of-calls: 8
+        slow-call-rate-threshold: 60
+        slow-call-duration-threshold: 6000ms
+        permitted-number-of-calls-in-half-open-state: 4
+      redis:
+        failure-rate-threshold: 80
+        wait-duration-in-open-state: 30000ms
+        sliding-window-size: 10
+        minimum-number-of-calls: 3
+        slow-call-rate-threshold: 90
+        slow-call-duration-threshold: 2000ms
+        permitted-number-of-calls-in-half-open-state: 2
+
+# Server Configuration
+server:
+  port: 8082
+
+# Management/Actuator Configuration
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+
+# Application Configuration
+app:
+  kafka:
+    topics:
+      inventory-update: inventory-update
+    consumer:
+      group-id: central-inventory-group
+      
+  # Configurações de limpeza de eventos antigos
+  cleanup:
+    events:
+      enabled: true
+      retention-days: 30
+      schedule: "0 2 * * *" # Todo dia às 2:00 AM
+
+# Logging Configuration
+logging:
+  level:
+    com.inventory.management.central: DEBUG
+    org.springframework.kafka: INFO
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+  pattern:
+    console: "%d{HH:mm:ss.SSS} [%thread] %-5level [%X{traceId:-},%X{spanId:-}] %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level [%X{traceId:-},%X{spanId:-}] %logger{50} - %msg%n"
+
+# SpringDoc OpenAPI Configuration
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operationsSorter: method

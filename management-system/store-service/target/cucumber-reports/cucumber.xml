@@ -1,0 +1,416 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="Cucumber" time="11.019" tests="24" skipped="0" failures="9" errors="0">
+<testcase classname="Sincronização de Estoque em Tempo Real - Testes Integrados" name="Sincronização de reserva de produto com sucesso" time="0.291">
+<failure type="org.opentest4j.AssertionFailedError" message="
+expected: 200 OK
+ but was: 404 NOT_FOUND">
+<![CDATA[org.opentest4j.AssertionFailedError: 
+expected: 200 OK
+ but was: 404 NOT_FOUND
+	at java.base/jdk.internal.reflect.DirectConstructorHandleAccessor.newInstance(DirectConstructorHandleAccessor.java:62)
+	at java.base/java.lang.reflect.Constructor.newInstanceWithCaller(Constructor.java:502)
+	at com.inventory.management.store.cucumber.stepdefinitions.IntegratedInventorySyncSteps.queOSistemaEstaRodandoComInfraestruturaCompleta(IntegratedInventorySyncSteps.java:89)
+	at ✽.que o sistema está rodando com infraestrutura completa(classpath:features/integration/real-time-inventory-sync.feature:9)
+]]>
+</failure>
+<system-out><![CDATA[
+Dado que o sistema está rodando com infraestrutura completa.................failed
+E o banco de dados PostgreSQL está disponível...............................skipped
+E o cache Redis está disponível.............................................skipped
+E o Kafka está disponível para mensageria...................................skipped
+E existem produtos no estoque central.......................................skipped
+Dado que existe um produto "iPhone 15" com 10 unidades no estoque central...skipped
+E o produto está disponível no cache Redis..................................skipped
+Quando eu reservo 3 unidades do produto "iPhone 15".........................skipped
+Então a reserva deve ser processada com sucesso.............................skipped
+E o estoque deve ser atualizado para 7 unidades no banco PostgreSQL.........skipped
+E o cache Redis deve refletir o novo estoque de 7 unidades..................skipped
+E uma mensagem de atualização deve ser enviada via Kafka....................skipped
+E a mensagem deve ser consumida pelo sistema central........................skipped
+]]></system-out>
+</testcase>
+<testcase classname="Sincronização de Estoque em Tempo Real - Testes Integrados" name="Sincronização de cancelamento de reserva" time="0.015">
+<failure type="org.opentest4j.AssertionFailedError" message="
+expected: 200 OK
+ but was: 404 NOT_FOUND">
+<![CDATA[org.opentest4j.AssertionFailedError: 
+expected: 200 OK
+ but was: 404 NOT_FOUND
+	at java.base/jdk.internal.reflect.DirectConstructorHandleAccessor.newInstance(DirectConstructorHandleAccessor.java:62)
+	at java.base/java.lang.reflect.Constructor.newInstanceWithCaller(Constructor.java:502)
+	at com.inventory.management.store.cucumber.stepdefinitions.IntegratedInventorySyncSteps.queOSistemaEstaRodandoComInfraestruturaCompleta(IntegratedInventorySyncSteps.java:89)
+	at ✽.que o sistema está rodando com infraestrutura completa(classpath:features/integration/real-time-inventory-sync.feature:9)
+]]>
+</failure>
+<system-out><![CDATA[
+Dado que o sistema está rodando com infraestrutura completa.................failed
+E o banco de dados PostgreSQL está disponível...............................skipped
+E o cache Redis está disponível.............................................skipped
+E o Kafka está disponível para mensageria...................................skipped
+E existem produtos no estoque central.......................................skipped
+Dado que existe um produto "Samsung Galaxy S24" com 5 unidades no estoque...skipped
+E existe uma reserva ativa de 2 unidades para este produto..................skipped
+E o estoque disponível é de 3 unidades......................................skipped
+Quando eu cancelo a reserva de 2 unidades...................................skipped
+Então a reserva deve ser cancelada com sucesso..............................skipped
+E o estoque deve voltar para 5 unidades no banco PostgreSQL.................skipped
+E o cache Redis deve ser atualizado para 5 unidades disponíveis.............skipped
+E uma mensagem de cancelamento deve ser enviada via Kafka...................skipped
+]]></system-out>
+</testcase>
+<testcase classname="Sincronização de Estoque em Tempo Real - Testes Integrados" name="Recuperação automática após falha temporária do Redis" time="0.017">
+<failure type="org.opentest4j.AssertionFailedError" message="
+expected: 200 OK
+ but was: 404 NOT_FOUND">
+<![CDATA[org.opentest4j.AssertionFailedError: 
+expected: 200 OK
+ but was: 404 NOT_FOUND
+	at java.base/jdk.internal.reflect.DirectConstructorHandleAccessor.newInstance(DirectConstructorHandleAccessor.java:62)
+	at java.base/java.lang.reflect.Constructor.newInstanceWithCaller(Constructor.java:502)
+	at com.inventory.management.store.cucumber.stepdefinitions.IntegratedInventorySyncSteps.queOSistemaEstaRodandoComInfraestruturaCompleta(IntegratedInventorySyncSteps.java:89)
+	at ✽.que o sistema está rodando com infraestrutura completa(classpath:features/integration/real-time-inventory-sync.feature:9)
+]]>
+</failure>
+<system-out><![CDATA[
+Dado que o sistema está rodando com infraestrutura completa.................failed
+E o banco de dados PostgreSQL está disponível...............................skipped
+E o cache Redis está disponível.............................................skipped
+E o Kafka está disponível para mensageria...................................skipped
+E existem produtos no estoque central.......................................skipped
+Dado que existe um produto "MacBook Pro" com 8 unidades no estoque..........skipped
+E o cache Redis está temporariamente indisponível...........................skipped
+Quando eu tento reservar 2 unidades do produto "MacBook Pro"................skipped
+Então o sistema deve consultar diretamente o banco PostgreSQL...............skipped
+E a reserva deve ser processada mesmo sem cache.............................skipped
+E o estoque deve ser atualizado no banco para 6 unidades....................skipped
+E quando o Redis voltar a estar disponível..................................skipped
+Então o cache deve ser sincronizado automaticamente.........................skipped
+]]></system-out>
+</testcase>
+<testcase classname="Sincronização de Estoque em Tempo Real - Testes Integrados" name="Gerenciamento de concorrência em reservas simultâneas" time="1.03">
+<failure type="org.opentest4j.AssertionFailedError" message="
+expected: 200 OK
+ but was: 404 NOT_FOUND">
+<![CDATA[org.opentest4j.AssertionFailedError: 
+expected: 200 OK
+ but was: 404 NOT_FOUND
+	at java.base/jdk.internal.reflect.DirectConstructorHandleAccessor.newInstance(DirectConstructorHandleAccessor.java:62)
+	at java.base/java.lang.reflect.Constructor.newInstanceWithCaller(Constructor.java:502)
+	at com.inventory.management.store.cucumber.stepdefinitions.IntegratedInventorySyncSteps.queOSistemaEstaRodandoComInfraestruturaCompleta(IntegratedInventorySyncSteps.java:89)
+	at ✽.que o sistema está rodando com infraestrutura completa(classpath:features/integration/real-time-inventory-sync.feature:9)
+]]>
+</failure>
+<system-out><![CDATA[
+Dado que o sistema está rodando com infraestrutura completa.................skipped
+E o banco de dados PostgreSQL está disponível...............................skipped
+E o cache Redis está disponível.............................................skipped
+E o Kafka está disponível para mensageria...................................skipped
+E existem produtos no estoque central.......................................skipped
+E que existe um produto "Nintendo Switch" com 3 unidades no estoque central.skipped
+Quando 5 usuários tentam reservar 1 unidade simultaneamente.................skipped
+Então apenas 3 reservas devem ser aprovadas.................................skipped
+E 2 reservas devem ser rejeitadas por falta de estoque......................skipped
+E o estoque final deve ser 0 unidades no banco PostgreSQL...................skipped
+E o cache Redis deve refletir 0 unidades disponíveis........................skipped
+E as mensagens Kafka devem registrar todas as transações....................skipped
+]]></system-out>
+</testcase>
+<testcase classname="Sincronização de Estoque em Tempo Real - Testes Integrados" name="Processamento em lote de atualizações de estoque" time="0.018">
+<failure type="org.opentest4j.AssertionFailedError" message="
+expected: 200 OK
+ but was: 404 NOT_FOUND">
+<![CDATA[org.opentest4j.AssertionFailedError: 
+expected: 200 OK
+ but was: 404 NOT_FOUND
+	at java.base/jdk.internal.reflect.DirectConstructorHandleAccessor.newInstance(DirectConstructorHandleAccessor.java:62)
+	at java.base/java.lang.reflect.Constructor.newInstanceWithCaller(Constructor.java:502)
+	at com.inventory.management.store.cucumber.stepdefinitions.IntegratedInventorySyncSteps.queOSistemaEstaRodandoComInfraestruturaCompleta(IntegratedInventorySyncSteps.java:89)
+	at ✽.que o sistema está rodando com infraestrutura completa(classpath:features/integration/real-time-inventory-sync.feature:9)
+]]>
+</failure>
+<system-out><![CDATA[
+Dado que o sistema está rodando com infraestrutura completa.................failed
+E o banco de dados PostgreSQL está disponível...............................skipped
+E o cache Redis está disponível.............................................skipped
+E o Kafka está disponível para mensageria...................................skipped
+E existem produtos no estoque central.......................................skipped
+Dado que existem múltiplos produtos no estoque:.............................skipped
+Quando eu processo um lote de reservas:.....................................skipped
+Então todas as reservas devem ser processadas em lote.......................skipped
+E os estoques devem ser atualizados atomicamente no PostgreSQL:.............skipped
+E o cache Redis deve refletir todas as alterações...........................skipped
+E uma mensagem Kafka deve ser enviada para cada atualização.................skipped
+]]></system-out>
+</testcase>
+<testcase classname="Sincronização de Estoque em Tempo Real - Testes Integrados" name="Monitoramento de métricas em tempo real" time="0.013">
+<failure type="org.opentest4j.AssertionFailedError" message="
+expected: 200 OK
+ but was: 404 NOT_FOUND">
+<![CDATA[org.opentest4j.AssertionFailedError: 
+expected: 200 OK
+ but was: 404 NOT_FOUND
+	at java.base/jdk.internal.reflect.DirectConstructorHandleAccessor.newInstance(DirectConstructorHandleAccessor.java:62)
+	at java.base/java.lang.reflect.Constructor.newInstanceWithCaller(Constructor.java:502)
+	at com.inventory.management.store.cucumber.stepdefinitions.IntegratedInventorySyncSteps.queOSistemaEstaRodandoComInfraestruturaCompleta(IntegratedInventorySyncSteps.java:89)
+	at ✽.que o sistema está rodando com infraestrutura completa(classpath:features/integration/real-time-inventory-sync.feature:9)
+]]>
+</failure>
+<system-out><![CDATA[
+Dado que o sistema está rodando com infraestrutura completa.................failed
+E o banco de dados PostgreSQL está disponível...............................skipped
+E o cache Redis está disponível.............................................skipped
+E o Kafka está disponível para mensageria...................................skipped
+E existem produtos no estoque central.......................................skipped
+Dado que o sistema está coletando métricas via Prometheus...................skipped
+Quando eu realizo várias operações de reserva e cancelamento................skipped
+Então as métricas devem ser atualizadas em tempo real.......................skipped
+E os endpoints de health check devem reportar status OK.....................skipped
+E as métricas de latência do Kafka devem estar dentro dos limites...........skipped
+]]></system-out>
+</testcase>
+<testcase classname="Gerenciamento de Inventário" name="Buscar produtos disponíveis na loja" time="0.132">
+<system-out><![CDATA[
+Dado que existe uma loja com ID "STORE-001".................................passed
+E existe um produto com SKU "PROD-001" e nome "Produto Teste" na loja.......passed
+E o produto tem 100 unidades em estoque.....................................passed
+E o produto está ativo......................................................passed
+Quando eu busco produtos disponíveis na loja "STORE-001"....................passed
+Então eu devo receber uma lista de produtos.................................passed
+E a lista deve conter o produto "PROD-001"..................................passed
+E o produto deve ter 100 unidades disponíveis...............................passed
+]]></system-out>
+</testcase>
+<testcase classname="Gerenciamento de Inventário" name="Buscar produtos por nome" time="0.019">
+<failure type="java.lang.AssertionError" message="
+Expecting actual not to be null">
+<![CDATA[java.lang.AssertionError: 
+Expecting actual not to be null
+	at com.inventory.management.store.cucumber.stepdefinitions.ProductSearchSteps.o_produto_deve_ter_nome(ProductSearchSteps.java:101)
+	at com.inventory.management.store.cucumber.stepdefinitions.ProductSearchSteps.o_produto_deve_ter_o_nome(ProductSearchSteps.java:108)
+	at ✽.o produto deve ter o nome "Produto Teste"(classpath:features/inventory-management.feature:26)
+]]>
+</failure>
+<system-out><![CDATA[
+Dado que existe uma loja com ID "STORE-001".................................passed
+E existe um produto com SKU "PROD-001" e nome "Produto Teste" na loja.......passed
+E o produto tem 100 unidades em estoque.....................................passed
+E o produto está ativo......................................................passed
+Quando eu busco produtos com nome "Produto Teste" na loja "STORE-001".......passed
+Então eu devo receber uma lista de produtos.................................passed
+E a lista deve conter o produto "PROD-001"..................................passed
+E o produto deve ter o nome "Produto Teste".................................failed
+]]></system-out>
+</testcase>
+<testcase classname="Gerenciamento de Inventário" name="Buscar produto específico por SKU" time="0.02">
+<system-out><![CDATA[
+Dado que existe uma loja com ID "STORE-001".................................passed
+E existe um produto com SKU "PROD-001" e nome "Produto Teste" na loja.......passed
+E o produto tem 100 unidades em estoque.....................................passed
+E o produto está ativo......................................................passed
+Quando eu busco o produto com SKU "PROD-001" na loja "STORE-001"............passed
+Então eu devo receber os detalhes do produto................................passed
+E o produto deve ter SKU "PROD-001".........................................passed
+E o produto deve ter nome "Produto Teste"...................................passed
+E o produto deve ter 100 unidades em estoque................................passed
+]]></system-out>
+</testcase>
+<testcase classname="Gerenciamento de Inventário" name="Buscar produto que não existe" time="0.014">
+<failure type="org.opentest4j.AssertionFailedError" message="Mensagem não deve ser null ==&gt; expected: not &lt;null&gt;">
+<![CDATA[org.opentest4j.AssertionFailedError: Mensagem não deve ser null ==> expected: not <null>
+	at org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:152)
+	at org.junit.jupiter.api.AssertionFailureBuilder.buildAndThrow(AssertionFailureBuilder.java:132)
+	at org.junit.jupiter.api.AssertNotNull.failNull(AssertNotNull.java:49)
+	at org.junit.jupiter.api.AssertNotNull.assertNotNull(AssertNotNull.java:35)
+	at org.junit.jupiter.api.Assertions.assertNotNull(Assertions.java:312)
+	at com.inventory.management.store.cucumber.stepdefinitions.ProductReservationSteps.a_mensagem_deve_ser(ProductReservationSteps.java:255)
+	at ✽.a mensagem deve ser "Produto não encontrado"(classpath:features/inventory-management.feature:40)
+]]>
+</failure>
+<system-out><![CDATA[
+Dado que existe uma loja com ID "STORE-001".................................passed
+E existe um produto com SKU "PROD-001" e nome "Produto Teste" na loja.......passed
+E o produto tem 100 unidades em estoque.....................................passed
+E o produto está ativo......................................................passed
+Quando eu busco o produto com SKU "PROD-999" na loja "STORE-001"............passed
+Então eu devo receber um erro...............................................passed
+E a mensagem deve ser "Produto não encontrado"..............................failed
+]]></system-out>
+</testcase>
+<testcase classname="Reserva de Produtos" name="Reservar produto com sucesso" time="0.023">
+<system-out><![CDATA[
+Dado que existe uma loja com ID "STORE-001".................................passed
+E existe um produto com SKU "PROD-001" e nome "Produto Teste" na loja.......passed
+E o produto tem 50 unidades em estoque......................................passed
+E o produto está ativo......................................................passed
+Quando eu reservo 10 unidades do produto "PROD-001" na loja "STORE-001".....passed
+Então a reserva deve ser bem-sucedida.......................................passed
+E o produto deve ter 10 unidades reservadas.................................passed
+E o produto deve ter 40 unidades disponíveis................................passed
+E a mensagem deve ser "Produto reservado com sucesso".......................passed
+]]></system-out>
+</testcase>
+<testcase classname="Reserva de Produtos" name="Tentar reservar mais produtos do que disponível" time="0.012">
+<system-out><![CDATA[
+Dado que existe uma loja com ID "STORE-001".................................passed
+E existe um produto com SKU "PROD-001" e nome "Produto Teste" na loja.......passed
+E o produto tem 50 unidades em estoque......................................passed
+E o produto está ativo......................................................passed
+Quando eu reservo 60 unidades do produto "PROD-001" na loja "STORE-001".....passed
+Então a reserva deve falhar.................................................passed
+E a mensagem deve conter "Estoque insuficiente".............................passed
+]]></system-out>
+</testcase>
+<testcase classname="Reserva de Produtos" name="Tentar reservar produto que não existe" time="0.013">
+<system-out><![CDATA[
+Dado que existe uma loja com ID "STORE-001".................................passed
+E existe um produto com SKU "PROD-001" e nome "Produto Teste" na loja.......passed
+E o produto tem 50 unidades em estoque......................................passed
+E o produto está ativo......................................................passed
+Quando eu reservo 5 unidades do produto "PROD-999" na loja "STORE-001"......passed
+Então a reserva deve falhar.................................................passed
+E a mensagem deve conter "Produto não encontrado"...........................passed
+]]></system-out>
+</testcase>
+<testcase classname="Reserva de Produtos" name="Tentar reservar com quantidade inválida - Example #1.1" time="0.011">
+<system-out><![CDATA[
+Dado que existe uma loja com ID "STORE-001".................................passed
+E existe um produto com SKU "PROD-001" e nome "Produto Teste" na loja.......passed
+E o produto tem 50 unidades em estoque......................................passed
+E o produto está ativo......................................................passed
+Quando eu reservo 0 unidades do produto "PROD-001" na loja "STORE-001"......passed
+Então a reserva deve falhar.................................................passed
+E a mensagem deve conter "Quantidade deve ser maior que zero"...............passed
+]]></system-out>
+</testcase>
+<testcase classname="Reserva de Produtos" name="Tentar reservar com quantidade inválida - Example #1.2" time="0.009">
+<system-out><![CDATA[
+Dado que existe uma loja com ID "STORE-001".................................passed
+E existe um produto com SKU "PROD-001" e nome "Produto Teste" na loja.......passed
+E o produto tem 50 unidades em estoque......................................passed
+E o produto está ativo......................................................passed
+Quando eu reservo -1 unidades do produto "PROD-001" na loja "STORE-001".....passed
+Então a reserva deve falhar.................................................passed
+E a mensagem deve conter "Quantidade deve ser maior que zero"...............passed
+]]></system-out>
+</testcase>
+<testcase classname="Reserva de Produtos" name="Tentar reservar com quantidade inválida - Example #1.3" time="0.01">
+<system-out><![CDATA[
+Dado que existe uma loja com ID "STORE-001".................................passed
+E existe um produto com SKU "PROD-001" e nome "Produto Teste" na loja.......passed
+E o produto tem 50 unidades em estoque......................................passed
+E o produto está ativo......................................................passed
+Quando eu reservo -10 unidades do produto "PROD-001" na loja "STORE-001"....passed
+Então a reserva deve falhar.................................................passed
+E a mensagem deve conter "Quantidade deve ser maior que zero"...............passed
+]]></system-out>
+</testcase>
+<testcase classname="Reserva de Produtos" name="Tentar reservar produto inativo" time="0.018">
+<failure type="org.opentest4j.AssertionFailedError" message="
+Expecting value to be false but was true">
+<![CDATA[org.opentest4j.AssertionFailedError: 
+Expecting value to be false but was true
+	at java.base/jdk.internal.reflect.DirectConstructorHandleAccessor.newInstance(DirectConstructorHandleAccessor.java:62)
+	at java.base/java.lang.reflect.Constructor.newInstanceWithCaller(Constructor.java:502)
+	at com.inventory.management.store.cucumber.stepdefinitions.ProductReservationSteps.a_reserva_deve_falhar(ProductReservationSteps.java:187)
+	at ✽.a reserva deve falhar(classpath:features/product-reservation.feature:50)
+]]>
+</failure>
+<system-out><![CDATA[
+Dado que existe uma loja com ID "STORE-001".................................passed
+E existe um produto com SKU "PROD-001" e nome "Produto Teste" na loja.......passed
+E o produto tem 50 unidades em estoque......................................passed
+E o produto está ativo......................................................passed
+Dado que o produto "PROD-001" está inativo..................................passed
+Quando eu reservo 5 unidades do produto "PROD-001" na loja "STORE-001"......passed
+Então a reserva deve falhar.................................................failed
+E a mensagem deve conter "Produto não está ativo"...........................skipped
+]]></system-out>
+</testcase>
+<testcase classname="Cancelamento de Reservas" name="Cancelar reserva com sucesso" time="0.029">
+<system-out><![CDATA[
+Dado que existe uma loja com ID "STORE-001".................................passed
+E existe um produto com SKU "PROD-001" e nome "Produto Teste" na loja.......passed
+E o produto tem 80 unidades em estoque......................................passed
+E o produto tem 20 unidades reservadas......................................passed
+E o produto está ativo......................................................passed
+Quando eu cancelo 10 unidades da reserva do produto "PROD-001" na loja "STORE-001".passed
+Então o cancelamento deve ser bem-sucedido..................................passed
+E o produto deve ter 10 unidades reservadas.................................passed
+E o produto deve ter 90 unidades disponíveis................................passed
+E a mensagem deve ser "Reserva cancelada com sucesso".......................passed
+]]></system-out>
+</testcase>
+<testcase classname="Cancelamento de Reservas" name="Tentar cancelar mais do que está reservado" time="0.015">
+<system-out><![CDATA[
+Dado que existe uma loja com ID "STORE-001".................................passed
+E existe um produto com SKU "PROD-001" e nome "Produto Teste" na loja.......passed
+E o produto tem 80 unidades em estoque......................................passed
+E o produto tem 20 unidades reservadas......................................passed
+E o produto está ativo......................................................passed
+Quando eu cancelo 30 unidades da reserva do produto "PROD-001" na loja "STORE-001".passed
+Então o cancelamento deve falhar............................................passed
+E a mensagem deve conter "Quantidade reservada insuficiente"................passed
+]]></system-out>
+</testcase>
+<testcase classname="Cancelamento de Reservas" name="Tentar cancelar reserva de produto que não existe" time="0.016">
+<system-out><![CDATA[
+Dado que existe uma loja com ID "STORE-001".................................passed
+E existe um produto com SKU "PROD-001" e nome "Produto Teste" na loja.......passed
+E o produto tem 80 unidades em estoque......................................passed
+E o produto tem 20 unidades reservadas......................................passed
+E o produto está ativo......................................................passed
+Quando eu cancelo 5 unidades da reserva do produto "PROD-999" na loja "STORE-001".passed
+Então o cancelamento deve falhar............................................passed
+E a mensagem deve conter "Produto não encontrado"...........................passed
+]]></system-out>
+</testcase>
+<testcase classname="Cancelamento de Reservas" name="Tentar cancelar reserva com quantidade inválida - Example #1.1" time="0.014">
+<system-out><![CDATA[
+Dado que existe uma loja com ID "STORE-001".................................passed
+E existe um produto com SKU "PROD-001" e nome "Produto Teste" na loja.......passed
+E o produto tem 80 unidades em estoque......................................passed
+E o produto tem 20 unidades reservadas......................................passed
+E o produto está ativo......................................................passed
+Quando eu cancelo 0 unidades da reserva do produto "PROD-001" na loja "STORE-001".passed
+Então o cancelamento deve falhar............................................passed
+E a mensagem deve conter "Quantidade deve ser maior que zero"...............passed
+]]></system-out>
+</testcase>
+<testcase classname="Cancelamento de Reservas" name="Tentar cancelar reserva com quantidade inválida - Example #1.2" time="0.013">
+<system-out><![CDATA[
+Dado que existe uma loja com ID "STORE-001".................................passed
+E existe um produto com SKU "PROD-001" e nome "Produto Teste" na loja.......passed
+E o produto tem 80 unidades em estoque......................................passed
+E o produto tem 20 unidades reservadas......................................passed
+E o produto está ativo......................................................passed
+Quando eu cancelo -5 unidades da reserva do produto "PROD-001" na loja "STORE-001".passed
+Então o cancelamento deve falhar............................................passed
+E a mensagem deve conter "Quantidade deve ser maior que zero"...............passed
+]]></system-out>
+</testcase>
+<testcase classname="Cancelamento de Reservas" name="Tentar cancelar reserva em loja que não existe" time="0.015">
+<system-out><![CDATA[
+Dado que existe uma loja com ID "STORE-001".................................passed
+E existe um produto com SKU "PROD-001" e nome "Produto Teste" na loja.......passed
+E o produto tem 80 unidades em estoque......................................passed
+E o produto tem 20 unidades reservadas......................................passed
+E o produto está ativo......................................................passed
+Quando eu cancelo 5 unidades da reserva do produto "PROD-001" na loja "STORE-999".passed
+Então o cancelamento deve falhar............................................passed
+E a mensagem deve conter "Produto não encontrado"...........................passed
+]]></system-out>
+</testcase>
+<testcase classname="Cancelamento de Reservas" name="Cancelar toda a reserva do produto" time="0.018">
+<system-out><![CDATA[
+Dado que existe uma loja com ID "STORE-001".................................passed
+E existe um produto com SKU "PROD-001" e nome "Produto Teste" na loja.......passed
+E o produto tem 80 unidades em estoque......................................passed
+E o produto tem 20 unidades reservadas......................................passed
+E o produto está ativo......................................................passed
+Quando eu cancelo 20 unidades da reserva do produto "PROD-001" na loja "STORE-001".passed
+Então o cancelamento deve ser bem-sucedido..................................passed
+E o produto deve ter 0 unidades reservadas..................................passed
+E o produto deve ter 100 unidades disponíveis...............................passed
+]]></system-out>
+</testcase>
+</testsuite>

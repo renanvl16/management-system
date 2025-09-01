@@ -1,0 +1,294 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>InventoryEventProcessingService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Central Inventory Service</a> &gt; <a href="index.source.html" class="el_package">com.inventory.management.central.domain.service</a> &gt; <span class="el_source">InventoryEventProcessingService.java</span></div><h1>InventoryEventProcessingService.java</h1><pre class="source lang-java linenums">package com.inventory.management.central.domain.service;
+
+import com.inventory.management.central.domain.exception.InventoryProcessingException;
+import com.inventory.management.central.domain.model.CentralInventory;
+import com.inventory.management.central.domain.model.InventoryEvent;
+import com.inventory.management.central.domain.model.StoreInventory;
+import com.inventory.management.central.domain.port.CentralInventoryRepository;
+import com.inventory.management.central.domain.port.InventoryEventRepository;
+import com.inventory.management.central.domain.port.StoreInventoryRepository;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
+
+/**
+ * Serviço de domínio para processamento de eventos de inventário.
+ * 
+ * Versão COMPLETA que persiste eventos E sincroniza as bases de dados
+ * do store e central inventory em tempo real.
+ * 
+ * @author Sistema de Gerenciamento de Inventário
+ * @version 1.0.0
+ * @since 1.0.0
+ */
+@Service
+<span class="fc" id="L30">@RequiredArgsConstructor</span>
+<span class="fc" id="L31">@Slf4j</span>
+public class InventoryEventProcessingService {
+    
+    private final InventoryEventRepository inventoryEventRepository;
+    private final StoreInventoryRepository storeInventoryRepository;
+    private final CentralInventoryRepository centralInventoryRepository;
+    
+    /**
+     * Processa um evento de inventário recebido de uma loja.
+     * 
+     * Versão COMPLETA que persiste eventos E sincroniza as bases de dados
+     * do store e central inventory em tempo real.
+     * 
+     * @param event evento a ser processado
+     * @return true se processado com sucesso
+     */
+    @Transactional
+    public boolean processInventoryEvent(InventoryEvent event) {
+<span class="fc" id="L49">        log.info(&quot;🔄 Processando evento de inventário: eventId={}, tipo={}, produto={}, loja={}&quot;, </span>
+<span class="fc" id="L50">                event.getEventId(), event.getEventType(), event.getProductSku(), event.getStoreId());</span>
+        
+        try {
+            // Validar evento
+<span class="fc bfc" id="L54" title="All 2 branches covered.">            if (!isEventValid(event)) {</span>
+<span class="fc" id="L55">                log.warn(&quot;⚠️  Evento inválido ignorado: eventId={}&quot;, event.getEventId());</span>
+<span class="fc" id="L56">                return false;</span>
+            }
+            
+            // 1. Processar e logar o evento
+<span class="fc" id="L60">            processEventByType(event);</span>
+            
+            // 2. Sincronizar as tabelas de inventário
+<span class="fc" id="L63">            updateInventoryTables(event);</span>
+            
+<span class="fc" id="L65">            log.info(&quot;✅ Evento processado e inventários sincronizados: eventId={}&quot;, event.getEventId());</span>
+<span class="fc" id="L66">            return true;</span>
+            
+<span class="fc" id="L68">        } catch (Exception e) {</span>
+<span class="fc" id="L69">            log.error(&quot;❌ Erro ao processar evento: {}&quot;, e.getMessage(), e);</span>
+<span class="fc" id="L70">            throw new RuntimeException(&quot;Falha no processamento do evento&quot;, e);</span>
+        }
+    }
+    
+    /**
+     * Atualiza as tabelas de inventário (store_inventory e central_inventory)
+     * com base no evento processado.
+     */
+    private void updateInventoryTables(InventoryEvent event) {
+        try {
+<span class="fc" id="L80">            log.info(&quot;🔄 Sincronizando inventários para evento: {}&quot;, event.getEventId());</span>
+            
+            // 1. Atualizar store_inventory
+<span class="fc" id="L83">            updateStoreInventory(event);</span>
+            
+            // 2. Atualizar central_inventory (agregado)  
+<span class="fc" id="L86">            updateCentralInventory(event.getProductSku());</span>
+            
+<span class="fc" id="L88">            log.info(&quot;✅ Inventários sincronizados com sucesso: produto={}&quot;, event.getProductSku());</span>
+            
+<span class="fc" id="L90">        } catch (Exception e) {</span>
+<span class="fc" id="L91">            log.error(&quot;❌ Erro ao sincronizar inventários: produto={}, erro={}&quot;, </span>
+<span class="fc" id="L92">                    event.getProductSku(), e.getMessage(), e);</span>
+            // Re-throw para falhar a transação
+<span class="fc" id="L94">            throw new RuntimeException(&quot;Falha na sincronização de inventários&quot;, e);</span>
+<span class="fc" id="L95">        }</span>
+<span class="fc" id="L96">    }</span>
+    
+    /**
+     * Atualiza o inventário da loja específica.
+     */
+    private void updateStoreInventory(InventoryEvent event) {
+<span class="fc" id="L102">        String productSku = event.getProductSku();</span>
+<span class="fc" id="L103">        String storeId = event.getStoreId();</span>
+        
+<span class="fc" id="L105">        log.debug(&quot;🏪 Atualizando store_inventory: produto={}, loja={}&quot;, productSku, storeId);</span>
+        
+        // Buscar inventário existente ou criar novo
+<span class="fc" id="L108">        Optional&lt;StoreInventory&gt; existingOpt = storeInventoryRepository.findByProductSkuAndStoreId(productSku, storeId);</span>
+        
+        StoreInventory storeInventory;
+<span class="fc bfc" id="L111" title="All 2 branches covered.">        if (existingOpt.isPresent()) {</span>
+<span class="fc" id="L112">            storeInventory = existingOpt.get();</span>
+<span class="fc" id="L113">            log.debug(&quot;📦 Store inventory encontrado: produto={}, loja={}, qtd_atual={}&quot;, </span>
+<span class="fc" id="L114">                    productSku, storeId, storeInventory.getQuantity());</span>
+        } else {
+            // Criar novo registro
+<span class="fc" id="L117">            storeInventory = StoreInventory.create(productSku, storeId, &quot;Store &quot; + storeId);</span>
+<span class="fc" id="L118">            log.debug(&quot;🆕 Criando novo store inventory: produto={}, loja={}&quot;, productSku, storeId);</span>
+        }
+        
+        // Atualizar com dados do evento
+<span class="fc" id="L122">        storeInventory.setQuantity(event.getNewQuantity());</span>
+<span class="fc bfc" id="L123" title="All 2 branches covered.">        storeInventory.setReservedQuantity(event.getReservedQuantity() != null ? event.getReservedQuantity() : 0);</span>
+<span class="fc" id="L124">        storeInventory.calculateAvailableQuantity();</span>
+<span class="fc" id="L125">        storeInventory.setLastUpdated(LocalDateTime.now());</span>
+<span class="fc" id="L126">        storeInventory.markAsSynchronized();</span>
+        
+        // Salvar (usando save normal)
+<span class="fc" id="L129">        StoreInventory saved = storeInventoryRepository.save(storeInventory);</span>
+        
+        // Verificar se a operação foi bem-sucedida
+<span class="pc bpc" id="L132" title="1 of 2 branches missed.">        if (saved != null) {</span>
+<span class="fc" id="L133">            log.debug(&quot;💾 Store inventory salvo: produto={}, loja={}, qtd={}, reservado={}, disponível={}&quot;, </span>
+<span class="fc" id="L134">                    productSku, storeId, saved.getQuantity(), saved.getReservedQuantity(), saved.getAvailableQuantity());</span>
+        } else {
+<span class="nc" id="L136">            log.error(&quot;❌ Falha ao salvar store inventory: produto={}, loja={}&quot;, productSku, storeId);</span>
+<span class="nc" id="L137">            throw new InventoryProcessingException(&quot;Falha ao salvar store inventory&quot;);</span>
+        }
+<span class="fc" id="L139">    }</span>
+    
+    /**
+     * Atualiza o inventário central consolidado.
+     */
+    private void updateCentralInventory(String productSku) {
+<span class="fc" id="L145">        log.debug(&quot;🏛️  Atualizando central_inventory: produto={}&quot;, productSku);</span>
+        
+        // Agregar dados de todas as lojas para este produto
+<span class="fc" id="L148">        Integer totalQuantity = storeInventoryRepository.sumQuantityByProductSku(productSku);</span>
+<span class="fc" id="L149">        Integer totalReserved = storeInventoryRepository.sumReservedQuantityByProductSku(productSku);</span>
+        
+<span class="fc bfc" id="L151" title="All 2 branches covered.">        if (totalQuantity == null) totalQuantity = 0;</span>
+<span class="fc bfc" id="L152" title="All 2 branches covered.">        if (totalReserved == null) totalReserved = 0;</span>
+        
+<span class="fc" id="L154">        log.debug(&quot;📊 Totais agregados: produto={}, total={}, reservado={}&quot;, productSku, totalQuantity, totalReserved);</span>
+        
+        // Buscar inventário central existente ou criar novo
+<span class="fc" id="L157">        Optional&lt;CentralInventory&gt; existingOpt = centralInventoryRepository.findByProductSku(productSku);</span>
+        
+        CentralInventory centralInventory;
+<span class="fc bfc" id="L160" title="All 2 branches covered.">        if (existingOpt.isPresent()) {</span>
+<span class="fc" id="L161">            centralInventory = existingOpt.get();</span>
+<span class="fc" id="L162">            log.debug(&quot;📦 Central inventory encontrado: produto={}, total_atual={}&quot;, </span>
+<span class="fc" id="L163">                    productSku, centralInventory.getTotalQuantity());</span>
+        } else {
+            // Criar novo registro
+<span class="fc" id="L166">            centralInventory = CentralInventory.create(productSku, &quot;Product &quot; + productSku);</span>
+<span class="fc" id="L167">            log.debug(&quot;🆕 Criando novo central inventory: produto={}&quot;, productSku);</span>
+        }
+        
+        // Atualizar com totais consolidados
+<span class="fc" id="L171">        centralInventory.setTotalQuantity(totalQuantity);</span>
+<span class="fc" id="L172">        centralInventory.setTotalReservedQuantity(totalReserved);</span>
+<span class="fc" id="L173">        centralInventory.calculateAvailableQuantity();</span>
+<span class="fc" id="L174">        centralInventory.setLastUpdated(LocalDateTime.now());</span>
+        
+        // Salvar
+<span class="fc" id="L177">        CentralInventory saved = centralInventoryRepository.save(centralInventory);</span>
+<span class="fc" id="L178">        log.debug(&quot;💾 Central inventory salvo: produto={}, total={}, reservado={}, disponível={}&quot;, </span>
+<span class="fc" id="L179">                productSku, saved.getTotalQuantity(), saved.getTotalReservedQuantity(), saved.getAvailableQuantity());</span>
+<span class="fc" id="L180">    }</span>
+    
+    /**
+     * Processa o evento baseado no tipo (apenas logging por enquanto).
+     */
+    private void processEventByType(InventoryEvent event) {
+<span class="pc bpc" id="L186" title="1 of 6 branches missed.">        switch (event.getEventType()) {</span>
+            case RESERVE -&gt; {
+<span class="fc" id="L188">                log.info(&quot;🔒 Evento RESERVE processado: produto={}, loja={}, quantidade={}&quot;, </span>
+<span class="fc" id="L189">                        event.getProductSku(), event.getStoreId(), event.getNewQuantity());</span>
+<span class="fc" id="L190">            }</span>
+            case COMMIT -&gt; {
+<span class="fc" id="L192">                log.info(&quot;✅ Evento COMMIT processado: produto={}, loja={}, quantidade={}&quot;, </span>
+<span class="fc" id="L193">                        event.getProductSku(), event.getStoreId(), event.getNewQuantity());</span>
+<span class="fc" id="L194">            }</span>
+            case CANCEL -&gt; {
+<span class="fc" id="L196">                log.info(&quot;❌ Evento CANCEL processado: produto={}, loja={}, quantidade={}&quot;, </span>
+<span class="fc" id="L197">                        event.getProductSku(), event.getStoreId(), event.getNewQuantity());</span>
+<span class="fc" id="L198">            }</span>
+            case UPDATE -&gt; {
+<span class="fc" id="L200">                log.info(&quot;🔄 Evento UPDATE processado: produto={}, loja={}, quantidade={}&quot;, </span>
+<span class="fc" id="L201">                        event.getProductSku(), event.getStoreId(), event.getNewQuantity());</span>
+<span class="fc" id="L202">            }</span>
+            case RESTOCK -&gt; {
+<span class="fc" id="L204">                log.info(&quot;📦 Evento RESTOCK processado: produto={}, loja={}, quantidade={}&quot;, </span>
+<span class="fc" id="L205">                        event.getProductSku(), event.getStoreId(), event.getNewQuantity());</span>
+<span class="fc" id="L206">            }</span>
+            default -&gt; {
+<span class="nc" id="L208">                log.warn(&quot;⚠️  Tipo de evento não reconhecido: {}&quot;, event.getEventType());</span>
+<span class="nc" id="L209">                throw new IllegalArgumentException(&quot;Tipo de evento não reconhecido: &quot; + event.getEventType());</span>
+            }
+        }
+<span class="fc" id="L212">    }</span>
+    
+    /**
+     * Valida se o evento está completo e correto.
+     */
+    private boolean isEventValid(InventoryEvent event) {
+<span class="pc bpc" id="L218" title="1 of 2 branches missed.">        if (event == null) {</span>
+<span class="nc" id="L219">            log.warn(&quot;⚠️  Evento é null&quot;);</span>
+<span class="nc" id="L220">            return false;</span>
+        }
+        
+<span class="fc bfc" id="L223" title="All 2 branches covered.">        if (event.getEventId() == null) {</span>
+<span class="fc" id="L224">            log.warn(&quot;⚠️  EventId é null&quot;);</span>
+<span class="fc" id="L225">            return false;</span>
+        }
+        
+<span class="fc bfc" id="L228" title="All 4 branches covered.">        if (event.getProductSku() == null || event.getProductSku().trim().isEmpty()) {</span>
+<span class="fc" id="L229">            log.warn(&quot;⚠️  ProductSku é null ou vazio&quot;);</span>
+<span class="fc" id="L230">            return false;</span>
+        }
+        
+<span class="fc bfc" id="L233" title="All 4 branches covered.">        if (event.getStoreId() == null || event.getStoreId().trim().isEmpty()) {</span>
+<span class="fc" id="L234">            log.warn(&quot;⚠️  StoreId é null ou vazio&quot;);</span>
+<span class="fc" id="L235">            return false;</span>
+        }
+        
+<span class="fc bfc" id="L238" title="All 2 branches covered.">        if (event.getEventType() == null) {</span>
+<span class="fc" id="L239">            log.warn(&quot;⚠️  EventType é null&quot;);</span>
+<span class="fc" id="L240">            return false;</span>
+        }
+        
+<span class="fc bfc" id="L243" title="All 4 branches covered.">        if (event.getNewQuantity() == null || event.getNewQuantity() &lt; 0) {</span>
+<span class="fc" id="L244">            log.warn(&quot;⚠️  NewQuantity é null ou negativo: {}&quot;, event.getNewQuantity());</span>
+<span class="fc" id="L245">            return false;</span>
+        }
+        
+<span class="fc bfc" id="L248" title="All 2 branches covered.">        if (event.getTimestamp() == null) {</span>
+<span class="fc" id="L249">            log.warn(&quot;⚠️  Timestamp é null&quot;);</span>
+<span class="fc" id="L250">            return false;</span>
+        }
+        
+<span class="fc" id="L253">        return true;</span>
+    }
+    
+    /**
+     * Reprocessa eventos que falharam anteriormente.
+     * 
+     * @return número de eventos reprocessados
+     */
+    @Transactional
+    public int reprocessFailedEvents() {
+<span class="fc" id="L263">        log.info(&quot;🔄 Iniciando reprocessamento de eventos com falha&quot;);</span>
+        
+<span class="fc" id="L265">        List&lt;InventoryEvent&gt; failedEvents = inventoryEventRepository.findByProcessingStatus(</span>
+                InventoryEvent.ProcessingStatus.FAILED);
+        
+<span class="fc" id="L268">        int reprocessedCount = 0;</span>
+<span class="fc bfc" id="L269" title="All 2 branches covered.">        for (InventoryEvent event : failedEvents) {</span>
+            try {
+                // Reset status para reprocessamento
+<span class="fc" id="L272">                event.setProcessingStatus(InventoryEvent.ProcessingStatus.PENDING);</span>
+<span class="fc" id="L273">                event.setProcessedAt(null);</span>
+<span class="fc" id="L274">                event.setErrorMessage(null);</span>
+                
+<span class="fc bfc" id="L276" title="All 2 branches covered.">                if (processInventoryEvent(event)) {</span>
+<span class="fc" id="L277">                    reprocessedCount++;</span>
+<span class="fc" id="L278">                    log.info(&quot;✅ Evento reprocessado com sucesso: eventId={}&quot;, event.getEventId());</span>
+                } else {
+<span class="fc" id="L280">                    log.warn(&quot;⚠️  Falha ao reprocessar evento: eventId={}&quot;, event.getEventId());</span>
+                }
+<span class="fc" id="L282">            } catch (Exception e) {</span>
+<span class="fc" id="L283">                log.error(&quot;❌ Erro ao reprocessar evento: eventId={}, erro={}&quot;, </span>
+<span class="fc" id="L284">                        event.getEventId(), e.getMessage(), e);</span>
+<span class="fc" id="L285">            }</span>
+<span class="fc" id="L286">        }</span>
+        
+<span class="fc" id="L288">        log.info(&quot;🔄 Reprocessamento concluído: {} eventos reprocessados de {} eventos com falha&quot;, </span>
+<span class="fc" id="L289">                reprocessedCount, failedEvents.size());</span>
+        
+<span class="fc" id="L291">        return reprocessedCount;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

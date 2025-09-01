@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CentralInventory.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Central Inventory Service</a> &gt; <a href="index.source.html" class="el_package">com.inventory.management.central.domain.model</a> &gt; <span class="el_source">CentralInventory.java</span></div><h1>CentralInventory.java</h1><pre class="source lang-java linenums">
+package com.inventory.management.central.domain.model;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
+
+import java.time.LocalDateTime;
+
+@Getter
+<span class="pc" id="L15">@Setter</span>
+<span class="pc" id="L16">@Builder</span>
+<span class="nc" id="L17">@NoArgsConstructor</span>
+<span class="fc" id="L18">@AllArgsConstructor</span>
+<span class="pc bpc" id="L19" title="6 of 14 branches missed.">@EqualsAndHashCode(onlyExplicitlyIncluded = true)</span>
+<span class="fc" id="L20">@ToString(includeFieldNames = true)</span>
+public class CentralInventory {
+	@EqualsAndHashCode.Include
+<span class="fc" id="L23">	private String productSku;</span>
+<span class="fc" id="L24">	private String productName;</span>
+<span class="fc" id="L25">	private String description;</span>
+<span class="fc" id="L26">	private String category;</span>
+<span class="fc" id="L27">	private Double unitPrice;</span>
+<span class="fc" id="L28">	private Integer totalQuantity;</span>
+<span class="fc" id="L29">	private Integer totalReservedQuantity;</span>
+<span class="fc" id="L30">	private Integer availableQuantity;</span>
+<span class="fc" id="L31">	private LocalDateTime lastUpdated;</span>
+<span class="fc" id="L32">	private Long version;</span>
+<span class="fc" id="L33">	private Boolean active;</span>
+
+	public void calculateAvailableQuantity() {
+<span class="fc" id="L36">		this.availableQuantity = this.totalQuantity - this.totalReservedQuantity;</span>
+<span class="fc" id="L37">	}</span>
+
+	public boolean hasAvailableStock() {
+<span class="fc bfc" id="L40" title="All 4 branches covered.">		return availableQuantity != null &amp;&amp; availableQuantity &gt; 0;</span>
+	}
+
+	public boolean hasStockAvailable(Integer requestedQuantity) {
+<span class="fc bfc" id="L44" title="All 6 branches covered.">		return availableQuantity != null &amp;&amp; requestedQuantity != null &amp;&amp; availableQuantity &gt;= requestedQuantity;</span>
+	}
+
+	public static CentralInventory create(String productSku, String productName) {
+<span class="fc" id="L48">		return CentralInventory.builder()</span>
+<span class="fc" id="L49">				.productSku(productSku)</span>
+<span class="fc" id="L50">				.productName(productName)</span>
+<span class="fc" id="L51">				.totalQuantity(0)</span>
+<span class="fc" id="L52">				.totalReservedQuantity(0)</span>
+<span class="fc" id="L53">				.availableQuantity(0)</span>
+<span class="fc" id="L54">				.lastUpdated(LocalDateTime.now())</span>
+<span class="fc" id="L55">				.active(true)</span>
+<span class="fc" id="L56">				.build();</span>
+	}
+
+	public void setTotalReservedQuantity(Integer reserved) {
+<span class="fc" id="L60">		this.totalReservedQuantity = reserved;</span>
+<span class="fc" id="L61">	}</span>
+
+	public void setLastUpdated(LocalDateTime lastUpdated) {
+<span class="fc" id="L64">		this.lastUpdated = lastUpdated;</span>
+<span class="fc" id="L65">	}</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

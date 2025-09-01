@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>KafkaConfig.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Central Inventory Service</a> &gt; <a href="index.source.html" class="el_package">com.inventory.management.central.infrastructure.config</a> &gt; <span class="el_source">KafkaConfig.java</span></div><h1>KafkaConfig.java</h1><pre class="source lang-java linenums">package com.inventory.management.central.infrastructure.config;
+
+import lombok.extern.slf4j.Slf4j;
+import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.common.serialization.StringDeserializer;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.kafka.annotation.EnableKafka;
+import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
+import org.springframework.kafka.core.ConsumerFactory;
+import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
+import org.springframework.kafka.listener.ContainerProperties;
+import org.springframework.kafka.listener.DefaultErrorHandler;
+import org.springframework.util.backoff.FixedBackOff;
+
+import java.util.HashMap;
+import java.util.Map;
+
+/**
+ * Configuração do Kafka para o Central Inventory Service.
+ * 
+ * Esta configuração define consumidores Kafka para receber eventos
+ * de inventário das lojas em tempo real.
+ * 
+ * @author Sistema de Gerenciamento de Inventário
+ * @version 1.0.0
+ * @since 1.0.0
+ */
+@Configuration
+@EnableKafka
+<span class="fc" id="L32">@Slf4j</span>
+<span class="fc" id="L33">public class KafkaConfig {</span>
+    
+    @Value(&quot;${spring.kafka.bootstrap-servers}&quot;)
+    private String bootstrapServers;
+    
+    @Value(&quot;${spring.kafka.consumer.group-id}&quot;)
+    private String groupId;
+    
+    @Value(&quot;${spring.kafka.consumer.auto-offset-reset:earliest}&quot;)
+    private String autoOffsetReset;
+    
+    @Value(&quot;${spring.kafka.consumer.enable-auto-commit:false}&quot;)
+    private Boolean enableAutoCommit;
+    
+    @Value(&quot;${spring.kafka.consumer.session-timeout-ms:30000}&quot;)
+    private Integer sessionTimeoutMs;
+    
+    @Value(&quot;${spring.kafka.consumer.heartbeat-interval-ms:3000}&quot;)
+    private Integer heartbeatIntervalMs;
+    
+    @Value(&quot;${spring.kafka.consumer.max-poll-records:10}&quot;)
+    private Integer maxPollRecords;
+    
+    @Value(&quot;${spring.kafka.consumer.max-poll-interval-ms:300000}&quot;)
+    private Integer maxPollIntervalMs;
+    
+    /**
+     * Factory para criação de consumidores Kafka.
+     */
+    @Bean
+    public ConsumerFactory&lt;String, String&gt; consumerFactory() {
+<span class="fc" id="L64">        log.info(&quot;🔧 Configurando Kafka Consumer Factory&quot;);</span>
+        
+<span class="fc" id="L66">        Map&lt;String, Object&gt; configProps = new HashMap&lt;&gt;();</span>
+        
+        // Configurações básicas
+<span class="fc" id="L69">        configProps.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);</span>
+<span class="fc" id="L70">        configProps.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);</span>
+<span class="fc" id="L71">        configProps.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, autoOffsetReset);</span>
+<span class="fc" id="L72">        configProps.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, enableAutoCommit);</span>
+        
+        // Deserializers
+<span class="fc" id="L75">        configProps.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);</span>
+<span class="fc" id="L76">        configProps.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);</span>
+        
+        // Configurações de performance e resiliência
+<span class="fc" id="L79">        configProps.put(ConsumerConfig.SESSION_TIMEOUT_MS_CONFIG, sessionTimeoutMs);</span>
+<span class="fc" id="L80">        configProps.put(ConsumerConfig.HEARTBEAT_INTERVAL_MS_CONFIG, heartbeatIntervalMs);</span>
+<span class="fc" id="L81">        configProps.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, maxPollRecords);</span>
+<span class="fc" id="L82">        configProps.put(ConsumerConfig.MAX_POLL_INTERVAL_MS_CONFIG, maxPollIntervalMs);</span>
+        
+        // Configurações de fetch
+<span class="fc" id="L85">        configProps.put(ConsumerConfig.FETCH_MIN_BYTES_CONFIG, 1);</span>
+<span class="fc" id="L86">        configProps.put(ConsumerConfig.FETCH_MAX_WAIT_MS_CONFIG, 5000);</span>
+        
+<span class="fc" id="L88">        log.info(&quot;✅ Kafka Consumer Factory configurado: bootstrapServers={}, groupId={}&quot;, </span>
+                bootstrapServers, groupId);
+        
+<span class="fc" id="L91">        return new DefaultKafkaConsumerFactory&lt;&gt;(configProps);</span>
+    }
+    
+    /**
+     * Factory de container para listeners Kafka.
+     */
+    @Bean
+    public ConcurrentKafkaListenerContainerFactory&lt;String, String&gt; kafkaListenerContainerFactory() {
+<span class="fc" id="L99">        log.info(&quot;🔧 Configurando Kafka Listener Container Factory&quot;);</span>
+        
+<span class="fc" id="L101">        ConcurrentKafkaListenerContainerFactory&lt;String, String&gt; factory = </span>
+                new ConcurrentKafkaListenerContainerFactory&lt;&gt;();
+        
+<span class="fc" id="L104">        factory.setConsumerFactory(consumerFactory());</span>
+        
+        // Configurar acknowledgment manual
+<span class="fc" id="L107">        factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.MANUAL_IMMEDIATE);</span>
+        
+        // Configurar concorrência (número de threads consumidoras) - apenas 1 para evitar conflitos
+<span class="fc" id="L110">        factory.setConcurrency(1);</span>
+        
+        // Configurar error handler com retry
+<span class="fc" id="L113">        DefaultErrorHandler errorHandler = new DefaultErrorHandler(</span>
+                new FixedBackOff(1000L, 3L) // 3 tentativas com 1s de intervalo
+        );
+        
+<span class="fc" id="L117">        factory.setCommonErrorHandler(errorHandler);</span>
+        
+<span class="fc" id="L119">        log.info(&quot;✅ Kafka Listener Container Factory configurado com {} threads&quot;, 1);</span>
+        
+<span class="fc" id="L121">        return factory;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

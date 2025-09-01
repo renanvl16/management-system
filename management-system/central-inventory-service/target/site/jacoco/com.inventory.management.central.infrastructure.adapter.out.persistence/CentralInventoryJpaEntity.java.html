@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CentralInventoryJpaEntity.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Central Inventory Service</a> &gt; <a href="index.source.html" class="el_package">com.inventory.management.central.infrastructure.adapter.out.persistence</a> &gt; <span class="el_source">CentralInventoryJpaEntity.java</span></div><h1>CentralInventoryJpaEntity.java</h1><pre class="source lang-java linenums">package com.inventory.management.central.infrastructure.adapter.out.persistence;
+
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+import java.time.LocalDateTime;
+
+/**
+ * Entidade JPA para inventário central.
+ * 
+ * @author Sistema de Gerenciamento de Inventário
+ * @version 1.0.0
+ * @since 1.0.0
+ */
+@Entity
+@Table(name = &quot;central_inventory&quot;)
+@Getter
+<span class="pc" id="L22">@Setter</span>
+<span class="pc" id="L23">@Builder</span>
+<span class="nc" id="L24">@NoArgsConstructor</span>
+<span class="fc" id="L25">@AllArgsConstructor</span>
+public class CentralInventoryJpaEntity {
+    
+    @Id
+    @Column(name = &quot;product_sku&quot;, nullable = false, length = 100)
+<span class="fc" id="L30">    private String productSku;</span>
+    
+    @Column(name = &quot;product_name&quot;, nullable = false, length = 200)
+<span class="fc" id="L33">    private String productName;</span>
+    
+    @Column(name = &quot;description&quot;, length = 500)
+<span class="fc" id="L36">    private String description;</span>
+    
+    @Column(name = &quot;category&quot;, length = 100)
+<span class="fc" id="L39">    private String category;</span>
+    
+    @Column(name = &quot;unit_price&quot;)
+<span class="fc" id="L42">    private Double unitPrice;</span>
+    
+    @Column(name = &quot;total_quantity&quot;, nullable = false)
+<span class="fc" id="L45">    private Integer totalQuantity;</span>
+    
+    @Column(name = &quot;total_reserved_quantity&quot;, nullable = false)
+<span class="fc" id="L48">    private Integer totalReservedQuantity;</span>
+    
+    @Column(name = &quot;available_quantity&quot;, nullable = false)
+<span class="fc" id="L51">    private Integer availableQuantity;</span>
+    
+    @Column(name = &quot;last_updated&quot;, nullable = false)
+<span class="fc" id="L54">    private LocalDateTime lastUpdated;</span>
+    
+    @Version
+    @Column(name = &quot;version&quot;)
+<span class="fc" id="L58">    private Long version;</span>
+    
+    @Column(name = &quot;active&quot;, nullable = false)
+<span class="fc" id="L61">    private Boolean active;</span>
+    
+    @PrePersist
+    @PreUpdate
+    public void calculateAvailableQuantity() {
+<span class="nc bnc" id="L66" title="All 4 branches missed.">        if (totalQuantity != null &amp;&amp; totalReservedQuantity != null) {</span>
+<span class="nc" id="L67">            this.availableQuantity = totalQuantity - totalReservedQuantity;</span>
+        }
+        
+<span class="nc bnc" id="L70" title="All 2 branches missed.">        if (lastUpdated == null) {</span>
+<span class="nc" id="L71">            lastUpdated = LocalDateTime.now();</span>
+        }
+        
+<span class="nc bnc" id="L74" title="All 2 branches missed.">        if (active == null) {</span>
+<span class="nc" id="L75">            active = true;</span>
+        }
+<span class="nc" id="L77">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

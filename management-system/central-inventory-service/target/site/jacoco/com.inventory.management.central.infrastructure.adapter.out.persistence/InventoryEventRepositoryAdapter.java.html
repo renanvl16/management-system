@@ -1,0 +1,277 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>InventoryEventRepositoryAdapter.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Central Inventory Service</a> &gt; <a href="index.source.html" class="el_package">com.inventory.management.central.infrastructure.adapter.out.persistence</a> &gt; <span class="el_source">InventoryEventRepositoryAdapter.java</span></div><h1>InventoryEventRepositoryAdapter.java</h1><pre class="source lang-java linenums">package com.inventory.management.central.infrastructure.adapter.out.persistence;
+
+import com.inventory.management.central.domain.model.InventoryEvent;
+import com.inventory.management.central.domain.port.InventoryEventRepository;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+/**
+ * Implementação JPA do repositório de eventos de inventário.
+ * 
+ * @author Sistema de Gerenciamento de Inventário
+ * @version 1.0.0
+ * @since 1.0.0
+ */
+@Component
+<span class="fc" id="L23">@RequiredArgsConstructor</span>
+<span class="fc" id="L24">@Slf4j</span>
+public class InventoryEventRepositoryAdapter implements InventoryEventRepository {
+    
+    private final InventoryEventJpaRepository jpaRepository;
+    
+    @Override
+    @Transactional
+    public InventoryEvent save(InventoryEvent event) {
+<span class="fc" id="L32">        log.debug(&quot;💾 Salvando evento: eventId={}&quot;, event.getEventId());</span>
+        
+<span class="fc" id="L34">        InventoryEventJpaEntity entity = toEntity(event);</span>
+<span class="fc" id="L35">        InventoryEventJpaEntity savedEntity = jpaRepository.save(entity);</span>
+        
+<span class="fc" id="L37">        return toDomain(savedEntity);</span>
+    }
+    
+    @Override
+    @Transactional(readOnly = true)
+    public Optional&lt;InventoryEvent&gt; findByEventId(UUID eventId) {
+<span class="fc" id="L43">        log.debug(&quot;🔍 Buscando evento: eventId={}&quot;, eventId);</span>
+        
+<span class="fc" id="L45">        return jpaRepository.findById(eventId)</span>
+<span class="fc" id="L46">                           .map(this::toDomain);</span>
+    }
+    
+    @Override
+    @Transactional(readOnly = true)
+    public List&lt;InventoryEvent&gt; findByProductSku(String productSku) {
+<span class="fc" id="L52">        log.debug(&quot;🔍 Buscando eventos por produto: productSku={}&quot;, productSku);</span>
+        
+<span class="fc" id="L54">        return jpaRepository.findByProductSku(productSku)</span>
+<span class="fc" id="L55">                           .stream()</span>
+<span class="fc" id="L56">                           .map(this::toDomain)</span>
+<span class="fc" id="L57">                           .toList();</span>
+    }
+    
+    @Override
+    @Transactional(readOnly = true)
+    public List&lt;InventoryEvent&gt; findByStoreId(String storeId) {
+<span class="fc" id="L63">        log.debug(&quot;🔍 Buscando eventos por loja: storeId={}&quot;, storeId);</span>
+        
+<span class="fc" id="L65">        return jpaRepository.findByStoreId(storeId)</span>
+<span class="fc" id="L66">                           .stream()</span>
+<span class="fc" id="L67">                           .map(this::toDomain)</span>
+<span class="fc" id="L68">                           .toList();</span>
+    }
+    
+    @Override
+    @Transactional(readOnly = true)
+    public List&lt;InventoryEvent&gt; findByProcessingStatus(InventoryEvent.ProcessingStatus status) {
+<span class="fc" id="L74">        log.debug(&quot;🔍 Buscando eventos por status: status={}&quot;, status);</span>
+        
+<span class="fc" id="L76">        InventoryEventJpaEntity.ProcessingStatus jpaStatus = toJpaStatus(status);</span>
+        
+<span class="fc" id="L78">        return jpaRepository.findByStatus(jpaStatus)</span>
+<span class="fc" id="L79">                           .stream()</span>
+<span class="fc" id="L80">                           .map(this::toDomain)</span>
+<span class="fc" id="L81">                           .toList();</span>
+    }
+    
+    @Override
+    @Transactional(readOnly = true)
+    public List&lt;InventoryEvent&gt; findByEventType(InventoryEvent.EventType eventType) {
+<span class="fc" id="L87">        log.debug(&quot;🔍 Buscando eventos por tipo: eventType={}&quot;, eventType);</span>
+        
+<span class="fc" id="L89">        InventoryEventJpaEntity.EventType jpaType = toJpaEventType(eventType);</span>
+        
+<span class="fc" id="L91">        return jpaRepository.findByEventType(jpaType)</span>
+<span class="fc" id="L92">                           .stream()</span>
+<span class="fc" id="L93">                           .map(this::toDomain)</span>
+<span class="fc" id="L94">                           .toList();</span>
+    }
+    
+    @Override
+    @Transactional(readOnly = true)
+    public List&lt;InventoryEvent&gt; findByTimestampBetween(LocalDateTime startTime, LocalDateTime endTime) {
+<span class="fc" id="L100">        log.debug(&quot;🔍 Buscando eventos por período: {} até {}&quot;, startTime, endTime);</span>
+        
+<span class="fc" id="L102">        return jpaRepository.findByCreatedAtBetweenOrderByCreatedAt(startTime, endTime)</span>
+<span class="fc" id="L103">                           .stream()</span>
+<span class="fc" id="L104">                           .map(this::toDomain)</span>
+<span class="fc" id="L105">                           .toList();</span>
+    }
+    
+    @Override
+    @Transactional(readOnly = true)
+    public List&lt;InventoryEvent&gt; findPendingEvents() {
+<span class="fc" id="L111">        log.debug(&quot;📋 Buscando eventos pendentes&quot;);</span>
+        
+<span class="fc" id="L113">        return jpaRepository.findByStatusOrderByCreatedAt(</span>
+                        InventoryEventJpaEntity.ProcessingStatus.PENDING)
+<span class="fc" id="L115">                           .stream()</span>
+<span class="fc" id="L116">                           .map(this::toDomain)</span>
+<span class="fc" id="L117">                           .toList();</span>
+    }
+    
+    @Override
+    @Transactional(readOnly = true)
+    public List&lt;InventoryEvent&gt; findFailedEvents() {
+<span class="fc" id="L123">        log.debug(&quot;📋 Buscando eventos com falha&quot;);</span>
+        
+<span class="fc" id="L125">        return jpaRepository.findByStatusOrderByCreatedAt(</span>
+                        InventoryEventJpaEntity.ProcessingStatus.FAILED)
+<span class="fc" id="L127">                           .stream()</span>
+<span class="fc" id="L128">                           .map(this::toDomain)</span>
+<span class="fc" id="L129">                           .toList();</span>
+    }
+    
+    @Override
+    @Transactional(readOnly = true)
+    public List&lt;InventoryEvent&gt; findProcessedEvents() {
+<span class="fc" id="L135">        log.debug(&quot;📋 Buscando eventos processados&quot;);</span>
+        
+<span class="fc" id="L137">        return jpaRepository.findByStatusOrderByCreatedAt(</span>
+                        InventoryEventJpaEntity.ProcessingStatus.PROCESSED)
+<span class="fc" id="L139">                           .stream()</span>
+<span class="fc" id="L140">                           .map(this::toDomain)</span>
+<span class="fc" id="L141">                           .toList();</span>
+    }
+    
+    @Override
+    @Transactional(readOnly = true)
+    public List&lt;InventoryEvent&gt; findAllOrderByTimestamp() {
+<span class="nc" id="L147">        log.debug(&quot;📋 Listando todos os eventos ordenados&quot;);</span>
+        
+<span class="nc" id="L149">        return jpaRepository.findAllByOrderByCreatedAt()</span>
+<span class="nc" id="L150">                           .stream()</span>
+<span class="nc" id="L151">                           .map(this::toDomain)</span>
+<span class="nc" id="L152">                           .toList();</span>
+    }
+    
+    @Override
+    @Transactional(readOnly = true)
+    public Long countByProductSkuAndTimestampBetween(String productSku, LocalDateTime startTime, LocalDateTime endTime) {
+<span class="fc" id="L158">        log.debug(&quot;🧮 Contando eventos: produto={}, período={} até {}&quot;, productSku, startTime, endTime);</span>
+        
+<span class="fc" id="L160">        return jpaRepository.countByProductSkuAndCreatedAtBetween(productSku, startTime, endTime);</span>
+    }
+    
+    @Override
+    @Transactional(readOnly = true)
+    public Long countByStoreIdAndTimestampBetween(String storeId, LocalDateTime startTime, LocalDateTime endTime) {
+<span class="fc" id="L166">        log.debug(&quot;🧮 Contando eventos: loja={}, período={} até {}&quot;, storeId, startTime, endTime);</span>
+        
+<span class="fc" id="L168">        return jpaRepository.countByStoreIdAndCreatedAtBetween(storeId, startTime, endTime);</span>
+    }
+    
+    @Override
+    @Transactional
+    public Long deleteByTimestampBefore(LocalDateTime olderThan) {
+<span class="fc" id="L174">        log.debug(&quot;🗑️  Removendo eventos anteriores a: {}&quot;, olderThan);</span>
+        
+<span class="fc" id="L176">        return jpaRepository.deleteByTimestampBefore(olderThan);</span>
+    }
+    
+    @Override
+    @Transactional(readOnly = true)
+    public boolean existsByEventId(UUID eventId) {
+<span class="fc" id="L182">        log.debug(&quot;❓ Verificando existência do evento: eventId={}&quot;, eventId);</span>
+        
+<span class="fc" id="L184">        return jpaRepository.existsById(eventId);</span>
+    }
+    
+    @Override
+    @Transactional
+    public Optional&lt;InventoryEvent&gt; updateProcessingStatus(UUID eventId, 
+                                                         InventoryEvent.ProcessingStatus status, 
+                                                         String errorMessage) {
+<span class="nc" id="L192">        log.debug(&quot;🔄 Atualizando status do evento: eventId={}, status={}&quot;, eventId, status);</span>
+        
+<span class="nc" id="L194">        InventoryEventJpaEntity.ProcessingStatus jpaStatus = toJpaStatus(status);</span>
+<span class="nc" id="L195">        int updatedRows = jpaRepository.updateProcessingStatus(eventId, jpaStatus);</span>
+        
+<span class="nc bnc" id="L197" title="All 2 branches missed.">        if (updatedRows &gt; 0) {</span>
+<span class="nc" id="L198">            return findByEventId(eventId);</span>
+        }
+        
+<span class="nc" id="L201">        return Optional.empty();</span>
+    }
+    
+    /**
+     * Converte entidade JPA para domínio.
+     */
+    private InventoryEvent toDomain(InventoryEventJpaEntity entity) {
+<span class="fc" id="L208">        return InventoryEvent.builder()</span>
+<span class="fc" id="L209">                .eventId(entity.getId())</span>
+<span class="fc" id="L210">                .productSku(entity.getProductSku())</span>
+<span class="fc" id="L211">                .storeId(entity.getStoreId())</span>
+<span class="fc" id="L212">                .eventType(toDomainEventType(entity.getEventType()))</span>
+<span class="fc" id="L213">                .newQuantity(entity.getQuantity())</span>
+<span class="fc" id="L214">                .timestamp(entity.getCreatedAt())</span>
+<span class="fc" id="L215">                .details(entity.getEventData())</span>
+<span class="fc" id="L216">                .processingStatus(toDomainStatus(entity.getStatus()))</span>
+<span class="fc" id="L217">                .processedAt(entity.getProcessedAt())</span>
+<span class="fc" id="L218">                .build();</span>
+    }
+    
+    /**
+     * Converte domínio para entidade JPA.
+     */
+    private InventoryEventJpaEntity toEntity(InventoryEvent domain) {
+<span class="fc" id="L225">        return InventoryEventJpaEntity.builder()</span>
+<span class="fc" id="L226">                .productSku(domain.getProductSku())</span>
+<span class="fc" id="L227">                .storeId(domain.getStoreId())</span>
+<span class="fc" id="L228">                .eventType(toJpaEventType(domain.getEventType()))</span>
+<span class="fc" id="L229">                .quantity(domain.getNewQuantity())</span>
+<span class="fc" id="L230">                .eventData(domain.getDetails())</span>
+<span class="fc" id="L231">                .createdAt(domain.getTimestamp())</span>
+<span class="fc" id="L232">                .status(toJpaStatus(domain.getProcessingStatus()))</span>
+<span class="fc" id="L233">                .processedAt(domain.getProcessedAt())</span>
+<span class="fc" id="L234">                .build();</span>
+    }
+    
+    // Métodos de conversão de enums
+    
+    private InventoryEvent.EventType toDomainEventType(InventoryEventJpaEntity.EventType jpaType) {
+<span class="pc bpc" id="L240" title="2 of 5 branches missed.">        return switch (jpaType) {</span>
+<span class="fc" id="L241">            case RESERVE -&gt; InventoryEvent.EventType.RESERVE;</span>
+<span class="fc" id="L242">            case COMMIT -&gt; InventoryEvent.EventType.COMMIT;</span>
+<span class="nc" id="L243">            case CANCEL -&gt; InventoryEvent.EventType.CANCEL;</span>
+<span class="fc" id="L244">            case UPDATE -&gt; InventoryEvent.EventType.UPDATE;</span>
+<span class="nc" id="L245">            case RESTOCK -&gt; InventoryEvent.EventType.RESTOCK;</span>
+        };
+    }
+    
+    private InventoryEventJpaEntity.EventType toJpaEventType(InventoryEvent.EventType domainType) {
+<span class="pc bpc" id="L250" title="2 of 5 branches missed.">        return switch (domainType) {</span>
+<span class="fc" id="L251">            case RESERVE -&gt; InventoryEventJpaEntity.EventType.RESERVE;</span>
+<span class="fc" id="L252">            case COMMIT -&gt; InventoryEventJpaEntity.EventType.COMMIT;</span>
+<span class="nc" id="L253">            case CANCEL -&gt; InventoryEventJpaEntity.EventType.CANCEL;</span>
+<span class="fc" id="L254">            case UPDATE -&gt; InventoryEventJpaEntity.EventType.UPDATE;</span>
+<span class="nc" id="L255">            case RESTOCK -&gt; InventoryEventJpaEntity.EventType.RESTOCK;</span>
+        };
+    }
+    
+    private InventoryEvent.ProcessingStatus toDomainStatus(InventoryEventJpaEntity.ProcessingStatus jpaStatus) {
+<span class="pc bpc" id="L260" title="1 of 4 branches missed.">        return switch (jpaStatus) {</span>
+<span class="fc" id="L261">            case PENDING -&gt; InventoryEvent.ProcessingStatus.PENDING;</span>
+<span class="fc" id="L262">            case PROCESSED -&gt; InventoryEvent.ProcessingStatus.PROCESSED;</span>
+<span class="fc" id="L263">            case FAILED -&gt; InventoryEvent.ProcessingStatus.FAILED;</span>
+<span class="nc" id="L264">            case IGNORED -&gt; InventoryEvent.ProcessingStatus.IGNORED;</span>
+        };
+    }
+    
+    private InventoryEventJpaEntity.ProcessingStatus toJpaStatus(InventoryEvent.ProcessingStatus domainStatus) {
+<span class="pc bpc" id="L269" title="1 of 4 branches missed.">        return switch (domainStatus) {</span>
+<span class="fc" id="L270">            case PENDING -&gt; InventoryEventJpaEntity.ProcessingStatus.PENDING;</span>
+<span class="fc" id="L271">            case PROCESSED -&gt; InventoryEventJpaEntity.ProcessingStatus.PROCESSED;</span>
+<span class="fc" id="L272">            case FAILED -&gt; InventoryEventJpaEntity.ProcessingStatus.FAILED;</span>
+<span class="nc" id="L273">            case IGNORED -&gt; InventoryEventJpaEntity.ProcessingStatus.IGNORED;</span>
+        };
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

@@ -1,0 +1,257 @@
+package com.inventory.management.store.infrastructure.adapter.in.web.dto.response;
+
+import com.inventory.management.store.application.dto.response.ReserveProductResponse;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+/**
+ * Testes unitários para ReservationResponse.
+ * 
+ * @author Sistema de Gerenciamento de Inventário
+ * @version 1.0.0
+ * @since 1.0.0
+ */
+@DisplayName("ReservationResponse Tests")
+class ReservationResponseTest {
+
+    private static final String TEST_SKU = "TEST-SKU-001";
+    private static final String TEST_MESSAGE = "Test message";
+
+    @Nested
+    @DisplayName("Constructor Tests")
+    class ConstructorTests {
+
+        @Test
+        @DisplayName("Deve criar ReservationResponse com construtor vazio")
+        void shouldCreateWithNoArgsConstructor() {
+            // When
+            ReservationResponse response = new ReservationResponse();
+            
+            // Then
+            assertNotNull(response);
+            assertFalse(response.isSuccess());
+            assertNull(response.getProductSku());
+            assertNull(response.getReservedQuantity());
+            assertNull(response.getAvailableQuantity());
+            assertNull(response.getMessage());
+        }
+
+        @Test
+        @DisplayName("Deve criar ReservationResponse com construtor completo")
+        void shouldCreateWithAllArgsConstructor() {
+            // Given
+            boolean success = true;
+            String productSku = TEST_SKU;
+            Integer reservedQuantity = 10;
+            Integer availableQuantity = 90;
+            String message = TEST_MESSAGE;
+            
+            // When
+            ReservationResponse response = new ReservationResponse(
+                success, productSku, reservedQuantity, availableQuantity, message
+            );
+            
+            // Then
+            assertNotNull(response);
+            assertTrue(response.isSuccess());
+            assertEquals(productSku, response.getProductSku());
+            assertEquals(reservedQuantity, response.getReservedQuantity());
+            assertEquals(availableQuantity, response.getAvailableQuantity());
+            assertEquals(message, response.getMessage());
+        }
+    }
+
+    @Nested
+    @DisplayName("Factory Methods Tests")
+    class FactoryMethodsTests {
+
+        @Test
+        @DisplayName("Deve criar ReservationResponse a partir de ReserveProductResponse")
+        void shouldCreateFromReserveProductResponse() {
+            // Given
+            ReserveProductResponse source = ReserveProductResponse.builder()
+                .success(true)
+                .productSku("RESERVE-SKU-001")
+                .reservedQuantity(15)
+                .availableQuantity(85)
+                .message("Produto reservado com sucesso")
+                .build();
+            
+            // When
+            ReservationResponse response = ReservationResponse.from(source);
+            
+            // Then
+            assertNotNull(response);
+            assertTrue(response.isSuccess());
+            assertEquals("RESERVE-SKU-001", response.getProductSku());
+            assertEquals(15, response.getReservedQuantity());
+            assertEquals(85, response.getAvailableQuantity());
+            assertEquals("Produto reservado com sucesso", response.getMessage());
+        }
+
+        @Test
+        @DisplayName("Deve criar ReservationResponse de erro")
+        void shouldCreateErrorResponse() {
+            // Given
+            String errorMessage = "Erro na reserva";
+            
+            // When
+            ReservationResponse response = ReservationResponse.error(errorMessage);
+            
+            // Then
+            assertNotNull(response);
+            assertFalse(response.isSuccess());
+            assertNull(response.getProductSku());
+            assertNull(response.getReservedQuantity());
+            assertNull(response.getAvailableQuantity());
+            assertEquals(errorMessage, response.getMessage());
+        }
+
+        @Test
+        @DisplayName("Deve criar ReservationResponse de erro com null message")
+        void shouldCreateErrorResponseWithNullMessage() {
+            // When
+            ReservationResponse response = ReservationResponse.error(null);
+            
+            // Then
+            assertNotNull(response);
+            assertFalse(response.isSuccess());
+            assertNull(response.getProductSku());
+            assertNull(response.getReservedQuantity());
+            assertNull(response.getAvailableQuantity());
+            assertNull(response.getMessage());
+        }
+    }
+
+    @Nested
+    @DisplayName("Object Behavior Tests")
+    class ObjectBehaviorTests {
+
+        @Test
+        @DisplayName("Deve implementar equals e hashCode corretamente")
+        void shouldImplementEqualsAndHashCode() {
+            // Given
+            ReservationResponse response1 = new ReservationResponse(
+                true, TEST_SKU, 10, 90, TEST_MESSAGE
+            );
+                
+            ReservationResponse response2 = new ReservationResponse(
+                true, TEST_SKU, 10, 90, TEST_MESSAGE
+            );
+                
+            ReservationResponse response3 = new ReservationResponse(
+                false, "DIFFERENT-SKU", 5, 45, "Different message"
+            );
+            
+            // Then
+            assertEquals(response1, response2);
+            assertEquals(response1.hashCode(), response2.hashCode());
+            assertNotEquals(response1, response3);
+            assertNotEquals(response1.hashCode(), response3.hashCode());
+        }
+
+        @Test
+        @DisplayName("Deve implementar toString corretamente")
+        void shouldImplementToString() {
+            // Given
+            ReservationResponse response = new ReservationResponse(
+                true, TEST_SKU, 20, 80, "Reserva realizada"
+            );
+            
+            // When
+            String toString = response.toString();
+            
+            // Then
+            assertNotNull(toString);
+            assertTrue(toString.contains("success=true"));
+            assertTrue(toString.contains("productSku=" + TEST_SKU));
+            assertTrue(toString.contains("reservedQuantity=20"));
+            assertTrue(toString.contains("availableQuantity=80"));
+            assertTrue(toString.contains("message=Reserva realizada"));
+        }
+
+        @Test
+        @DisplayName("Deve permitir modificação dos campos")
+        void shouldAllowFieldModification() {
+            // Given
+            ReservationResponse response = new ReservationResponse();
+            
+            // When
+            response.setSuccess(true);
+            response.setProductSku("MODIFIED-SKU");
+            response.setReservedQuantity(25);
+            response.setAvailableQuantity(75);
+            response.setMessage("Modified message");
+            
+            // Then
+            assertTrue(response.isSuccess());
+            assertEquals("MODIFIED-SKU", response.getProductSku());
+            assertEquals(25, response.getReservedQuantity());
+            assertEquals(75, response.getAvailableQuantity());
+            assertEquals("Modified message", response.getMessage());
+        }
+    }
+
+    @Nested
+    @DisplayName("Edge Cases Tests")
+    class EdgeCasesTests {
+
+        @Test
+        @DisplayName("Deve lidar com valores zero")
+        void shouldHandleZeroValues() {
+            // Given
+            ReservationResponse response = new ReservationResponse(
+                true, TEST_SKU, 0, 0, TEST_MESSAGE
+            );
+            
+            // Then
+            assertEquals(0, response.getReservedQuantity());
+            assertEquals(0, response.getAvailableQuantity());
+        }
+
+        @Test
+        @DisplayName("Deve lidar com strings vazias")
+        void shouldHandleEmptyStrings() {
+            // Given
+            ReservationResponse response = new ReservationResponse(
+                true, "", 10, 90, ""
+            );
+            
+            // Then
+            assertEquals("", response.getProductSku());
+            assertEquals("", response.getMessage());
+        }
+
+        @Test
+        @DisplayName("Deve lidar com valores negativos")
+        void shouldHandleNegativeValues() {
+            // Given
+            ReservationResponse response = new ReservationResponse(
+                false, TEST_SKU, -1, -2, "Negative values"
+            );
+            
+            // Then
+            assertEquals(-1, response.getReservedQuantity());
+            assertEquals(-2, response.getAvailableQuantity());
+        }
+
+        @Test
+        @DisplayName("Deve lidar com todos os campos null")
+        void shouldHandleAllNullFields() {
+            // Given
+            ReservationResponse response = new ReservationResponse(
+                false, null, null, null, null
+            );
+            
+            // Then
+            assertFalse(response.isSuccess());
+            assertNull(response.getProductSku());
+            assertNull(response.getReservedQuantity());
+            assertNull(response.getAvailableQuantity());
+            assertNull(response.getMessage());
+        }
+    }
+}

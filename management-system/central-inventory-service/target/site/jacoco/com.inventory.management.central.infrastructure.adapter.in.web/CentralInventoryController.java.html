@@ -1,0 +1,320 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CentralInventoryController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Central Inventory Service</a> &gt; <a href="index.source.html" class="el_package">com.inventory.management.central.infrastructure.adapter.in.web</a> &gt; <span class="el_source">CentralInventoryController.java</span></div><h1>CentralInventoryController.java</h1><pre class="source lang-java linenums">package com.inventory.management.central.infrastructure.adapter.in.web;
+
+import com.inventory.management.central.application.usecase.GetCentralInventoryUseCase;
+import com.inventory.management.central.application.usecase.GetStoreInventoryUseCase;
+import com.inventory.management.central.domain.model.CentralInventory;
+import com.inventory.management.central.domain.model.StoreInventory;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.Optional;
+
+/**
+ * Controlador REST para APIs centralizadas de inventário.
+ * 
+ * Este controlador fornece endpoints para consulta consolidada
+ * do inventário de todas as lojas do sistema.
+ * 
+ * @author Sistema de Gerenciamento de Inventário
+ * @version 1.0.0
+ * @since 1.0.0
+ */
+@RestController
+@RequestMapping(&quot;/api/v1/central-inventory&quot;)
+<span class="fc" id="L32">@RequiredArgsConstructor</span>
+<span class="fc" id="L33">@Slf4j</span>
+@Tag(name = &quot;Central Inventory&quot;, description = &quot;APIs para inventário consolidado&quot;)
+public class CentralInventoryController {
+    
+    private final GetCentralInventoryUseCase getCentralInventoryUseCase;
+    private final GetStoreInventoryUseCase getStoreInventoryUseCase;
+    
+    /**
+     * Busca inventário central por SKU.
+     */
+    @GetMapping(&quot;/products/{productSku}&quot;)
+    @Operation(summary = &quot;Buscar inventário por SKU&quot;, 
+               description = &quot;Retorna o inventário consolidado de um produto específico&quot;)
+    @ApiResponses({
+        @ApiResponse(responseCode = &quot;200&quot;, description = &quot;Inventário encontrado&quot;),
+        @ApiResponse(responseCode = &quot;404&quot;, description = &quot;Produto não encontrado&quot;),
+        @ApiResponse(responseCode = &quot;400&quot;, description = &quot;SKU inválido&quot;)
+    })
+    public ResponseEntity&lt;CentralInventory&gt; getProductInventory(
+            @Parameter(description = &quot;SKU do produto&quot;, required = true)
+            @PathVariable String productSku) {
+        
+<span class="fc" id="L55">        log.info(&quot;🔍 Consultando inventário central: productSku={}&quot;, productSku);</span>
+        
+<span class="fc" id="L57">        Optional&lt;CentralInventory&gt; inventory = getCentralInventoryUseCase.getByProductSku(productSku);</span>
+        
+<span class="fc" id="L59">        return inventory.map(ResponseEntity::ok)</span>
+<span class="fc" id="L60">                       .orElse(ResponseEntity.notFound().build());</span>
+    }
+    
+    /**
+     * Lista todos os produtos com inventário.
+     */
+    @GetMapping(&quot;/products&quot;)
+    @Operation(summary = &quot;Listar todos os produtos&quot;, 
+               description = &quot;Retorna lista de todos os produtos com inventário consolidado&quot;)
+    @ApiResponse(responseCode = &quot;200&quot;, description = &quot;Lista de produtos retornada&quot;)
+    public ResponseEntity&lt;List&lt;CentralInventory&gt;&gt; getAllProducts(
+            @Parameter(description = &quot;Incluir apenas produtos ativos&quot;)
+            @RequestParam(defaultValue = &quot;true&quot;) boolean activeOnly) {
+        
+<span class="fc" id="L74">        log.info(&quot;📋 Listando produtos: activeOnly={}&quot;, activeOnly);</span>
+        
+<span class="fc bfc" id="L76" title="All 2 branches covered.">        List&lt;CentralInventory&gt; inventories = activeOnly </span>
+<span class="fc" id="L77">                ? getCentralInventoryUseCase.getActiveProducts()</span>
+<span class="fc" id="L78">                : getCentralInventoryUseCase.getAllInventories();</span>
+        
+<span class="fc" id="L80">        return ResponseEntity.ok(inventories);</span>
+    }
+    
+    /**
+     * Lista produtos com estoque disponível.
+     */
+    @GetMapping(&quot;/products/with-stock&quot;)
+    @Operation(summary = &quot;Listar produtos com estoque&quot;, 
+               description = &quot;Retorna produtos que possuem estoque disponível&quot;)
+    @ApiResponse(responseCode = &quot;200&quot;, description = &quot;Lista de produtos com estoque&quot;)
+    public ResponseEntity&lt;List&lt;CentralInventory&gt;&gt; getProductsWithStock() {
+        
+<span class="fc" id="L92">        log.info(&quot;📦 Listando produtos com estoque disponível&quot;);</span>
+        
+<span class="fc" id="L94">        List&lt;CentralInventory&gt; inventories = getCentralInventoryUseCase.getProductsWithStock();</span>
+        
+<span class="fc" id="L96">        return ResponseEntity.ok(inventories);</span>
+    }
+    
+    /**
+     * Lista produtos com estoque baixo.
+     */
+    @GetMapping(&quot;/products/low-stock&quot;)
+    @Operation(summary = &quot;Listar produtos com estoque baixo&quot;, 
+               description = &quot;Retorna produtos com estoque abaixo do limite especificado&quot;)
+    @ApiResponse(responseCode = &quot;200&quot;, description = &quot;Lista de produtos com estoque baixo&quot;)
+    public ResponseEntity&lt;List&lt;CentralInventory&gt;&gt; getLowStockProducts(
+            @Parameter(description = &quot;Limite mínimo de estoque (padrão: 10)&quot;)
+            @RequestParam(defaultValue = &quot;10&quot;) Integer threshold) {
+        
+<span class="fc" id="L110">        log.info(&quot;⚠️  Listando produtos com estoque baixo: threshold={}&quot;, threshold);</span>
+        
+<span class="fc" id="L112">        List&lt;CentralInventory&gt; inventories = getCentralInventoryUseCase.getLowStockProducts(threshold);</span>
+        
+<span class="fc" id="L114">        return ResponseEntity.ok(inventories);</span>
+    }
+    
+    /**
+     * Lista produtos por categoria.
+     */
+    @GetMapping(&quot;/products/category/{category}&quot;)
+    @Operation(summary = &quot;Listar produtos por categoria&quot;, 
+               description = &quot;Retorna produtos de uma categoria específica&quot;)
+    @ApiResponses({
+        @ApiResponse(responseCode = &quot;200&quot;, description = &quot;Lista de produtos da categoria&quot;),
+        @ApiResponse(responseCode = &quot;400&quot;, description = &quot;Categoria inválida&quot;)
+    })
+    public ResponseEntity&lt;List&lt;CentralInventory&gt;&gt; getProductsByCategory(
+            @Parameter(description = &quot;Categoria do produto&quot;, required = true)
+            @PathVariable String category) {
+        
+<span class="fc" id="L131">        log.info(&quot;📂 Listando produtos por categoria: category={}&quot;, category);</span>
+        
+<span class="fc" id="L133">        List&lt;CentralInventory&gt; inventories = getCentralInventoryUseCase.getProductsByCategory(category);</span>
+        
+<span class="fc" id="L135">        return ResponseEntity.ok(inventories);</span>
+    }
+    
+    /**
+     * Busca produtos por nome.
+     */
+    @GetMapping(&quot;/products/search&quot;)
+    @Operation(summary = &quot;Buscar produtos por nome&quot;, 
+               description = &quot;Busca produtos que contenham o texto no nome&quot;)
+    @ApiResponse(responseCode = &quot;200&quot;, description = &quot;Lista de produtos encontrados&quot;)
+    public ResponseEntity&lt;List&lt;CentralInventory&gt;&gt; searchProducts(
+            @Parameter(description = &quot;Texto para busca no nome do produto&quot;, required = true)
+            @RequestParam String name) {
+        
+<span class="fc" id="L149">        log.info(&quot;🔍 Buscando produtos por nome: name={}&quot;, name);</span>
+        
+<span class="fc" id="L151">        List&lt;CentralInventory&gt; inventories = getCentralInventoryUseCase.searchByProductName(name);</span>
+        
+<span class="fc" id="L153">        return ResponseEntity.ok(inventories);</span>
+    }
+    
+    /**
+     * Verifica disponibilidade de estoque.
+     */
+    @GetMapping(&quot;/products/{productSku}/availability&quot;)
+    @Operation(summary = &quot;Verificar disponibilidade&quot;, 
+               description = &quot;Verifica se há estoque disponível para quantidade solicitada&quot;)
+    @ApiResponses({
+        @ApiResponse(responseCode = &quot;200&quot;, description = &quot;Resultado da verificação&quot;),
+        @ApiResponse(responseCode = &quot;400&quot;, description = &quot;Parâmetros inválidos&quot;),
+        @ApiResponse(responseCode = &quot;404&quot;, description = &quot;Produto não encontrado&quot;)
+    })
+    public ResponseEntity&lt;StockAvailabilityResponse&gt; checkStockAvailability(
+            @Parameter(description = &quot;SKU do produto&quot;, required = true)
+            @PathVariable String productSku,
+            @Parameter(description = &quot;Quantidade solicitada&quot;, required = true)
+            @RequestParam Integer quantity) {
+        
+<span class="fc" id="L173">        log.info(&quot;🔍 Verificando disponibilidade: productSku={}, quantidade={}&quot;, productSku, quantity);</span>
+        
+<span class="fc" id="L175">        boolean available = getCentralInventoryUseCase.checkStockAvailability(productSku, quantity);</span>
+        
+<span class="fc" id="L177">        Optional&lt;CentralInventory&gt; inventory = getCentralInventoryUseCase.getByProductSku(productSku);</span>
+        
+<span class="fc bfc" id="L179" title="All 2 branches covered.">        if (inventory.isEmpty()) {</span>
+<span class="fc" id="L180">            return ResponseEntity.notFound().build();</span>
+        }
+        
+<span class="fc" id="L183">        StockAvailabilityResponse response = StockAvailabilityResponse.builder()</span>
+<span class="fc" id="L184">                .productSku(productSku)</span>
+<span class="fc" id="L185">                .requestedQuantity(quantity)</span>
+<span class="fc" id="L186">                .availableQuantity(inventory.get().getAvailableQuantity())</span>
+<span class="fc" id="L187">                .available(available)</span>
+<span class="fc" id="L188">                .build();</span>
+        
+<span class="fc" id="L190">        return ResponseEntity.ok(response);</span>
+    }
+    
+    /**
+     * Lista inventário de produto por loja.
+     */
+    @GetMapping(&quot;/products/{productSku}/stores&quot;)
+    @Operation(summary = &quot;Listar produto por loja&quot;, 
+               description = &quot;Retorna inventário do produto em todas as lojas&quot;)
+    @ApiResponses({
+        @ApiResponse(responseCode = &quot;200&quot;, description = &quot;Lista de inventários por loja&quot;),
+        @ApiResponse(responseCode = &quot;400&quot;, description = &quot;SKU inválido&quot;)
+    })
+    public ResponseEntity&lt;List&lt;StoreInventory&gt;&gt; getProductByStores(
+            @Parameter(description = &quot;SKU do produto&quot;, required = true)
+            @PathVariable String productSku) {
+        
+<span class="fc" id="L207">        log.info(&quot;🏪 Listando produto por loja: productSku={}&quot;, productSku);</span>
+        
+<span class="fc" id="L209">        List&lt;StoreInventory&gt; inventories = getStoreInventoryUseCase.getProductInventoryAcrossStores(productSku);</span>
+        
+<span class="fc" id="L211">        return ResponseEntity.ok(inventories);</span>
+    }
+    
+    /**
+     * Lista inventário de uma loja específica.
+     */
+    @GetMapping(&quot;/stores/{storeId}/products&quot;)
+    @Operation(summary = &quot;Listar inventário da loja&quot;, 
+               description = &quot;Retorna todos os produtos de uma loja específica&quot;)
+    @ApiResponses({
+        @ApiResponse(responseCode = &quot;200&quot;, description = &quot;Lista de produtos da loja&quot;),
+        @ApiResponse(responseCode = &quot;400&quot;, description = &quot;ID da loja inválido&quot;)
+    })
+    public ResponseEntity&lt;List&lt;StoreInventory&gt;&gt; getStoreInventory(
+            @Parameter(description = &quot;ID da loja&quot;, required = true)
+            @PathVariable String storeId,
+            @Parameter(description = &quot;Incluir apenas produtos com estoque&quot;)
+            @RequestParam(defaultValue = &quot;false&quot;) boolean withStockOnly) {
+        
+<span class="fc" id="L230">        log.info(&quot;🏪 Listando inventário da loja: storeId={}, withStockOnly={}&quot;, storeId, withStockOnly);</span>
+        
+<span class="pc bpc" id="L232" title="1 of 2 branches missed.">        List&lt;StoreInventory&gt; inventories = withStockOnly</span>
+<span class="nc" id="L233">                ? getStoreInventoryUseCase.getStoreProductsWithStock(storeId)</span>
+<span class="fc" id="L234">                : getStoreInventoryUseCase.getInventoryByStore(storeId);</span>
+        
+<span class="fc" id="L236">        return ResponseEntity.ok(inventories);</span>
+    }
+    
+    /**
+     * Estatísticas de inventário de uma loja.
+     */
+    @GetMapping(&quot;/stores/{storeId}/stats&quot;)
+    @Operation(summary = &quot;Estatísticas da loja&quot;, 
+               description = &quot;Retorna estatísticas de inventário de uma loja&quot;)
+    @ApiResponses({
+        @ApiResponse(responseCode = &quot;200&quot;, description = &quot;Estatísticas da loja&quot;),
+        @ApiResponse(responseCode = &quot;400&quot;, description = &quot;ID da loja inválido&quot;)
+    })
+    public ResponseEntity&lt;GetStoreInventoryUseCase.StoreInventoryStats&gt; getStoreStats(
+            @Parameter(description = &quot;ID da loja&quot;, required = true)
+            @PathVariable String storeId) {
+        
+<span class="fc" id="L253">        log.info(&quot;📊 Consultando estatísticas da loja: storeId={}&quot;, storeId);</span>
+        
+<span class="fc" id="L255">        GetStoreInventoryUseCase.StoreInventoryStats stats = </span>
+<span class="fc" id="L256">                getStoreInventoryUseCase.calculateStoreStats(storeId);</span>
+        
+<span class="fc" id="L258">        return ResponseEntity.ok(stats);</span>
+    }
+    
+    /**
+     * Response para verificação de disponibilidade de estoque.
+     */
+    public static class StockAvailabilityResponse {
+        private final String productSku;
+        private final Integer requestedQuantity;
+        private final Integer availableQuantity;
+        private final Boolean available;
+        
+        public StockAvailabilityResponse(String productSku, Integer requestedQuantity, 
+<span class="fc" id="L271">                                       Integer availableQuantity, Boolean available) {</span>
+<span class="fc" id="L272">            this.productSku = productSku;</span>
+<span class="fc" id="L273">            this.requestedQuantity = requestedQuantity;</span>
+<span class="fc" id="L274">            this.availableQuantity = availableQuantity;</span>
+<span class="fc" id="L275">            this.available = available;</span>
+<span class="fc" id="L276">        }</span>
+        
+        public static StockAvailabilityResponseBuilder builder() {
+<span class="fc" id="L279">            return new StockAvailabilityResponseBuilder();</span>
+        }
+        
+        // Getters
+<span class="fc" id="L283">        public String getProductSku() { return productSku; }</span>
+<span class="fc" id="L284">        public Integer getRequestedQuantity() { return requestedQuantity; }</span>
+<span class="fc" id="L285">        public Integer getAvailableQuantity() { return availableQuantity; }</span>
+<span class="fc" id="L286">        public Boolean getAvailable() { return available; }</span>
+        
+<span class="fc" id="L288">        public static class StockAvailabilityResponseBuilder {</span>
+            private String productSku;
+            private Integer requestedQuantity;
+            private Integer availableQuantity;
+            private Boolean available;
+            
+            public StockAvailabilityResponseBuilder productSku(String productSku) {
+<span class="fc" id="L295">                this.productSku = productSku;</span>
+<span class="fc" id="L296">                return this;</span>
+            }
+            
+            public StockAvailabilityResponseBuilder requestedQuantity(Integer requestedQuantity) {
+<span class="fc" id="L300">                this.requestedQuantity = requestedQuantity;</span>
+<span class="fc" id="L301">                return this;</span>
+            }
+            
+            public StockAvailabilityResponseBuilder availableQuantity(Integer availableQuantity) {
+<span class="fc" id="L305">                this.availableQuantity = availableQuantity;</span>
+<span class="fc" id="L306">                return this;</span>
+            }
+            
+            public StockAvailabilityResponseBuilder available(Boolean available) {
+<span class="fc" id="L310">                this.available = available;</span>
+<span class="fc" id="L311">                return this;</span>
+            }
+            
+            public StockAvailabilityResponse build() {
+<span class="fc" id="L315">                return new StockAvailabilityResponse(productSku, requestedQuantity, availableQuantity, available);</span>
+            }
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

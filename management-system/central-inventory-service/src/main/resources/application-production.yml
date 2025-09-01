@@ -1,0 +1,96 @@
+spring:
+  # Database Configuration para Produção
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://postgres:5432/inventorydb}
+    driver-class-name: org.postgresql.Driver
+    username: ${DATABASE_USERNAME:inventory}
+    password: ${DATABASE_PASSWORD:inventory123}
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+      leak-detection-threshold: 60000
+      
+  # JPA Configuration para Produção
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: false
+        jdbc:
+          batch_size: 25
+        order_inserts: true
+        order_updates: true
+        
+  # H2 Console desabilitado em produção
+  h2:
+    console:
+      enabled: false
+      
+  # Kafka Configuration para Produção
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:kafka:29092}
+    consumer:
+      # Configurações otimizadas para produção
+      session-timeout-ms: 45000
+      heartbeat-interval-ms: 3000
+      max-poll-records: 50
+      max-poll-interval-ms: 300000
+      fetch-min-bytes: 50000
+      fetch-max-wait-ms: 500
+      
+  # Redis Configuration para Produção
+  data:
+    redis:
+      host: ${REDIS_HOST:redis}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:inventorypass123}
+      timeout: 5000ms
+      lettuce:
+        pool:
+          max-active: 20
+          max-idle: 10
+          min-idle: 5
+
+# Logging Configuration para Produção
+logging:
+  level:
+    com.inventory.management.central: INFO
+    org.springframework.kafka: WARN
+    org.hibernate.SQL: WARN
+    org.hibernate.type.descriptor.sql.BasicBinder: WARN
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level [%X{traceId:-},%X{spanId:-}] %logger{50} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level [%X{traceId:-},%X{spanId:-}] %logger{50} - %msg%n"
+  file:
+    name: /app/logs/central-inventory-service.log
+    max-size: 100MB
+    max-history: 10
+
+# Management/Actuator Configuration
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,metrics,prometheus,info
+  endpoint:
+    health:
+      show-details: when-authorized
+  tracing:
+    sampling:
+      probability: 1.0
+  zipkin:
+    tracing:
+      endpoint: ${ZIPKIN_ENDPOINT:http://zipkin:9411/api/v2/spans}
+
+# Application Configuration
+app:
+  rate-limit:
+    enabled: true
+    requests-per-minute: 50
+    requests-per-hour: 500

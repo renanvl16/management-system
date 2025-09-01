@@ -1,0 +1,325 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>GetStoreInventoryUseCase.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Central Inventory Service</a> &gt; <a href="index.source.html" class="el_package">com.inventory.management.central.application.usecase</a> &gt; <span class="el_source">GetStoreInventoryUseCase.java</span></div><h1>GetStoreInventoryUseCase.java</h1><pre class="source lang-java linenums">package com.inventory.management.central.application.usecase;
+
+import com.inventory.management.central.domain.model.StoreInventory;
+import com.inventory.management.central.domain.port.StoreInventoryRepository;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.Optional;
+
+/**
+ * Caso de uso para consultas do inventário por loja.
+ * 
+ * Este serviço fornece APIs para consulta do inventário
+ * específico de cada loja do sistema.
+ * 
+ * @author Sistema de Gerenciamento de Inventário
+ * @version 1.0.0
+ * @since 1.0.0
+ */
+@Service
+<span class="fc" id="L23">@RequiredArgsConstructor</span>
+<span class="fc" id="L24">@Slf4j</span>
+public class GetStoreInventoryUseCase {
+    
+    private static final String INVALID_STORE_ID = &quot;⚠️  ID da loja inválido&quot;;
+    
+    private final StoreInventoryRepository storeInventoryRepository;
+    
+    /**
+     * Busca inventário de um produto em uma loja específica.
+     * 
+     * @param productSku SKU do produto
+     * @param storeId identificador da loja
+     * @return inventário encontrado
+     */
+    public Optional&lt;StoreInventory&gt; getByProductSkuAndStoreId(String productSku, String storeId) {
+<span class="fc" id="L39">        log.debug(&quot;🔍 Buscando inventário na loja: productSku={}, storeId={}&quot;, productSku, storeId);</span>
+        
+<span class="fc bfc" id="L41" title="All 6 branches covered.">        if (productSku == null || productSku.trim().isEmpty() ||</span>
+<span class="fc bfc" id="L42" title="All 2 branches covered.">            storeId == null || storeId.trim().isEmpty()) {</span>
+<span class="fc" id="L43">            log.warn(&quot;⚠️  Parâmetros inválidos fornecidos&quot;);</span>
+<span class="fc" id="L44">            return Optional.empty();</span>
+        }
+        
+<span class="fc" id="L47">        Optional&lt;StoreInventory&gt; inventory = storeInventoryRepository.findByProductSkuAndStoreId(</span>
+<span class="fc" id="L48">                productSku.trim(), storeId.trim());</span>
+        
+<span class="fc bfc" id="L50" title="All 2 branches covered.">        if (inventory.isPresent()) {</span>
+<span class="fc" id="L51">            log.debug(&quot;✅ Inventário encontrado: productSku={}, storeId={}, disponível={}&quot;, </span>
+<span class="fc" id="L52">                    productSku, storeId, inventory.get().getAvailableQuantity());</span>
+        } else {
+<span class="fc" id="L54">            log.debug(&quot;❌ Inventário não encontrado: productSku={}, storeId={}&quot;, productSku, storeId);</span>
+        }
+        
+<span class="fc" id="L57">        return inventory;</span>
+    }
+    
+    /**
+     * Lista o inventário completo de uma loja específica.
+     * 
+     * @param storeId identificador da loja
+     * @return lista de inventários da loja
+     */
+    public List&lt;StoreInventory&gt; getInventoryByStore(String storeId) {
+<span class="fc" id="L67">        log.debug(&quot;📋 Listando inventário da loja: storeId={}&quot;, storeId);</span>
+        
+<span class="fc bfc" id="L69" title="All 4 branches covered.">        if (storeId == null || storeId.trim().isEmpty()) {</span>
+<span class="fc" id="L70">            log.warn(INVALID_STORE_ID);</span>
+<span class="fc" id="L71">            return List.of();</span>
+        }
+        
+<span class="fc" id="L74">        List&lt;StoreInventory&gt; inventories = storeInventoryRepository.findByStoreId(storeId.trim());</span>
+        
+<span class="fc" id="L76">        log.debug(&quot;✅ {} produtos encontrados na loja {}&quot;, inventories.size(), storeId);</span>
+<span class="fc" id="L77">        return inventories;</span>
+    }
+    
+    /**
+     * Lista o inventário de um produto em todas as lojas.
+     * 
+     * @param productSku SKU do produto
+     * @return lista de inventários do produto por loja
+     */
+    public List&lt;StoreInventory&gt; getProductInventoryAcrossStores(String productSku) {
+<span class="fc" id="L87">        log.debug(&quot;📋 Listando produto em todas as lojas: productSku={}&quot;, productSku);</span>
+        
+<span class="fc bfc" id="L89" title="All 4 branches covered.">        if (productSku == null || productSku.trim().isEmpty()) {</span>
+<span class="fc" id="L90">            log.warn(&quot;⚠️  SKU inválido&quot;);</span>
+<span class="fc" id="L91">            return List.of();</span>
+        }
+        
+<span class="fc" id="L94">        List&lt;StoreInventory&gt; inventories = storeInventoryRepository.findByProductSku(productSku.trim());</span>
+        
+<span class="fc" id="L96">        log.debug(&quot;✅ Produto {} encontrado em {} lojas&quot;, productSku, inventories.size());</span>
+<span class="fc" id="L97">        return inventories;</span>
+    }
+    
+    /**
+     * Lista produtos com estoque disponível em uma loja.
+     * 
+     * @param storeId identificador da loja
+     * @return lista de produtos com estoque na loja
+     */
+    public List&lt;StoreInventory&gt; getStoreProductsWithStock(String storeId) {
+<span class="fc" id="L107">        log.debug(&quot;📦 Listando produtos com estoque na loja: storeId={}&quot;, storeId);</span>
+        
+<span class="pc bpc" id="L109" title="1 of 4 branches missed.">        if (storeId == null || storeId.trim().isEmpty()) {</span>
+<span class="fc" id="L110">            log.warn(INVALID_STORE_ID);</span>
+<span class="fc" id="L111">            return List.of();</span>
+        }
+        
+<span class="fc" id="L114">        List&lt;StoreInventory&gt; inventories = storeInventoryRepository.findByStoreIdWithAvailableStock(storeId.trim());</span>
+        
+<span class="fc" id="L116">        log.debug(&quot;✅ {} produtos com estoque encontrados na loja {}&quot;, inventories.size(), storeId);</span>
+<span class="fc" id="L117">        return inventories;</span>
+    }
+    
+    /**
+     * Lista todos os produtos com estoque disponível em qualquer loja.
+     * 
+     * @return lista de produtos com estoque
+     */
+    public List&lt;StoreInventory&gt; getAllProductsWithStock() {
+<span class="fc" id="L126">        log.debug(&quot;📦 Listando todos os produtos com estoque disponível&quot;);</span>
+        
+<span class="fc" id="L128">        List&lt;StoreInventory&gt; inventories = storeInventoryRepository.findWithAvailableStock();</span>
+        
+<span class="fc" id="L130">        log.debug(&quot;✅ {} produtos com estoque encontrados&quot;, inventories.size());</span>
+<span class="fc" id="L131">        return inventories;</span>
+    }
+    
+    /**
+     * Lista inventários não sincronizados.
+     * 
+     * @return lista de inventários não sincronizados
+     */
+    public List&lt;StoreInventory&gt; getUnsynchronizedInventories() {
+<span class="fc" id="L140">        log.debug(&quot;⚠️  Listando inventários não sincronizados&quot;);</span>
+        
+<span class="fc" id="L142">        List&lt;StoreInventory&gt; inventories = storeInventoryRepository.findUnsynchronized();</span>
+        
+<span class="fc" id="L144">        log.debug(&quot;⚠️  {} inventários não sincronizados encontrados&quot;, inventories.size());</span>
+<span class="fc" id="L145">        return inventories;</span>
+    }
+    
+    /**
+     * Calcula estatísticas de inventário por loja.
+     * 
+     * @param storeId identificador da loja
+     * @return estatísticas da loja
+     */
+    public StoreInventoryStats calculateStoreStats(String storeId) {
+<span class="fc" id="L155">        log.debug(&quot;📊 Calculando estatísticas da loja: storeId={}&quot;, storeId);</span>
+        
+<span class="fc bfc" id="L157" title="All 4 branches covered.">        if (storeId == null || storeId.trim().isEmpty()) {</span>
+<span class="fc" id="L158">            log.warn(INVALID_STORE_ID);</span>
+<span class="fc" id="L159">            return StoreInventoryStats.empty();</span>
+        }
+        
+<span class="fc" id="L162">        List&lt;StoreInventory&gt; inventories = getInventoryByStore(storeId);</span>
+<span class="fc" id="L163">        List&lt;StoreInventory&gt; withStock = getStoreProductsWithStock(storeId);</span>
+        
+<span class="fc" id="L165">        int totalProducts = inventories.size();</span>
+<span class="fc" id="L166">        int productsWithStock = withStock.size();</span>
+<span class="fc" id="L167">        int productsWithoutStock = totalProducts - productsWithStock;</span>
+        
+<span class="fc" id="L169">        int totalQuantity = inventories.stream()</span>
+<span class="pc bpc" id="L170" title="1 of 2 branches missed.">                .mapToInt(inv -&gt; inv.getQuantity() != null ? inv.getQuantity() : 0)</span>
+<span class="fc" id="L171">                .sum();</span>
+        
+<span class="fc" id="L173">        int totalReserved = inventories.stream()</span>
+<span class="pc bpc" id="L174" title="1 of 2 branches missed.">                .mapToInt(inv -&gt; inv.getReservedQuantity() != null ? inv.getReservedQuantity() : 0)</span>
+<span class="fc" id="L175">                .sum();</span>
+        
+<span class="fc" id="L177">        StoreInventoryStats stats = StoreInventoryStats.builder()</span>
+<span class="fc" id="L178">                .storeId(storeId)</span>
+<span class="fc" id="L179">                .totalProducts(totalProducts)</span>
+<span class="fc" id="L180">                .productsWithStock(productsWithStock)</span>
+<span class="fc" id="L181">                .productsWithoutStock(productsWithoutStock)</span>
+<span class="fc" id="L182">                .totalQuantity(totalQuantity)</span>
+<span class="fc" id="L183">                .totalReservedQuantity(totalReserved)</span>
+<span class="fc" id="L184">                .totalAvailableQuantity(totalQuantity - totalReserved)</span>
+<span class="fc" id="L185">                .build();</span>
+        
+<span class="fc" id="L187">        log.debug(&quot;✅ Estatísticas calculadas para loja {}: {} produtos, {} com estoque&quot;, </span>
+<span class="fc" id="L188">                storeId, totalProducts, productsWithStock);</span>
+        
+<span class="fc" id="L190">        return stats;</span>
+    }
+    
+    /**
+     * Verifica disponibilidade de um produto em uma loja específica.
+     * 
+     * @param productSku SKU do produto
+     * @param storeId identificador da loja
+     * @param requestedQuantity quantidade solicitada
+     * @return true se há estoque disponível
+     */
+    public boolean checkStoreStockAvailability(String productSku, String storeId, Integer requestedQuantity) {
+<span class="fc" id="L202">        log.debug(&quot;🔍 Verificando disponibilidade na loja: productSku={}, storeId={}, quantidade={}&quot;, </span>
+                productSku, storeId, requestedQuantity);
+        
+<span class="pc bpc" id="L205" title="1 of 6 branches missed.">        if (productSku == null || productSku.trim().isEmpty() ||</span>
+<span class="pc bpc" id="L206" title="1 of 4 branches missed.">            storeId == null || storeId.trim().isEmpty() ||</span>
+<span class="fc bfc" id="L207" title="All 2 branches covered.">            requestedQuantity == null || requestedQuantity &lt;= 0) {</span>
+<span class="fc" id="L208">            log.warn(&quot;⚠️  Parâmetros inválidos para verificação de estoque&quot;);</span>
+<span class="fc" id="L209">            return false;</span>
+        }
+        
+<span class="fc" id="L212">        Optional&lt;StoreInventory&gt; inventory = getByProductSkuAndStoreId(productSku, storeId);</span>
+        
+<span class="fc bfc" id="L214" title="All 2 branches covered.">        if (inventory.isEmpty()) {</span>
+<span class="fc" id="L215">            log.debug(&quot;❌ Produto não encontrado na loja: productSku={}, storeId={}&quot;, productSku, storeId);</span>
+<span class="fc" id="L216">            return false;</span>
+        }
+        
+<span class="fc" id="L219">        boolean available = inventory.get().hasStockAvailable(requestedQuantity);</span>
+        
+<span class="fc" id="L221">        log.debug(&quot;{} Estoque {} na loja: productSku={}, storeId={}, solicitado={}, disponível={}&quot;, </span>
+<span class="fc bfc" id="L222" title="All 2 branches covered.">                available ? &quot;✅&quot; : &quot;❌&quot;,</span>
+<span class="fc bfc" id="L223" title="All 2 branches covered.">                available ? &quot;disponível&quot; : &quot;insuficiente&quot;,</span>
+                productSku, 
+                storeId,
+                requestedQuantity, 
+<span class="fc" id="L227">                inventory.get().getAvailableQuantity());</span>
+        
+<span class="fc" id="L229">        return available;</span>
+    }
+    
+    /**
+     * Classe para estatísticas de inventário de loja.
+     */
+    public static class StoreInventoryStats {
+        private final String storeId;
+        private final Integer totalProducts;
+        private final Integer productsWithStock;
+        private final Integer productsWithoutStock;
+        private final Integer totalQuantity;
+        private final Integer totalReservedQuantity;
+        private final Integer totalAvailableQuantity;
+        
+        public StoreInventoryStats(String storeId, Integer totalProducts, Integer productsWithStock, 
+                                 Integer productsWithoutStock, Integer totalQuantity, 
+<span class="fc" id="L246">                                 Integer totalReservedQuantity, Integer totalAvailableQuantity) {</span>
+<span class="fc" id="L247">            this.storeId = storeId;</span>
+<span class="fc" id="L248">            this.totalProducts = totalProducts;</span>
+<span class="fc" id="L249">            this.productsWithStock = productsWithStock;</span>
+<span class="fc" id="L250">            this.productsWithoutStock = productsWithoutStock;</span>
+<span class="fc" id="L251">            this.totalQuantity = totalQuantity;</span>
+<span class="fc" id="L252">            this.totalReservedQuantity = totalReservedQuantity;</span>
+<span class="fc" id="L253">            this.totalAvailableQuantity = totalAvailableQuantity;</span>
+<span class="fc" id="L254">        }</span>
+        
+        public static StoreInventoryStatsBuilder builder() {
+<span class="fc" id="L257">            return new StoreInventoryStatsBuilder();</span>
+        }
+        
+        public static StoreInventoryStats empty() {
+<span class="fc" id="L261">            return builder().build();</span>
+        }
+        
+        // Getters
+<span class="fc" id="L265">        public String getStoreId() { return storeId; }</span>
+<span class="fc" id="L266">        public Integer getTotalProducts() { return totalProducts; }</span>
+<span class="fc" id="L267">        public Integer getProductsWithStock() { return productsWithStock; }</span>
+<span class="fc" id="L268">        public Integer getProductsWithoutStock() { return productsWithoutStock; }</span>
+<span class="fc" id="L269">        public Integer getTotalQuantity() { return totalQuantity; }</span>
+<span class="fc" id="L270">        public Integer getTotalReservedQuantity() { return totalReservedQuantity; }</span>
+<span class="fc" id="L271">        public Integer getTotalAvailableQuantity() { return totalAvailableQuantity; }</span>
+        
+<span class="fc" id="L273">        public static class StoreInventoryStatsBuilder {</span>
+            private String storeId;
+<span class="fc" id="L275">            private Integer totalProducts = 0;</span>
+<span class="fc" id="L276">            private Integer productsWithStock = 0;</span>
+<span class="fc" id="L277">            private Integer productsWithoutStock = 0;</span>
+<span class="fc" id="L278">            private Integer totalQuantity = 0;</span>
+<span class="fc" id="L279">            private Integer totalReservedQuantity = 0;</span>
+<span class="fc" id="L280">            private Integer totalAvailableQuantity = 0;</span>
+            
+            public StoreInventoryStatsBuilder storeId(String storeId) {
+<span class="fc" id="L283">                this.storeId = storeId;</span>
+<span class="fc" id="L284">                return this;</span>
+            }
+            
+            public StoreInventoryStatsBuilder totalProducts(Integer totalProducts) {
+<span class="fc" id="L288">                this.totalProducts = totalProducts;</span>
+<span class="fc" id="L289">                return this;</span>
+            }
+            
+            public StoreInventoryStatsBuilder productsWithStock(Integer productsWithStock) {
+<span class="fc" id="L293">                this.productsWithStock = productsWithStock;</span>
+<span class="fc" id="L294">                return this;</span>
+            }
+            
+            public StoreInventoryStatsBuilder productsWithoutStock(Integer productsWithoutStock) {
+<span class="fc" id="L298">                this.productsWithoutStock = productsWithoutStock;</span>
+<span class="fc" id="L299">                return this;</span>
+            }
+            
+            public StoreInventoryStatsBuilder totalQuantity(Integer totalQuantity) {
+<span class="fc" id="L303">                this.totalQuantity = totalQuantity;</span>
+<span class="fc" id="L304">                return this;</span>
+            }
+            
+            public StoreInventoryStatsBuilder totalReservedQuantity(Integer totalReservedQuantity) {
+<span class="fc" id="L308">                this.totalReservedQuantity = totalReservedQuantity;</span>
+<span class="fc" id="L309">                return this;</span>
+            }
+            
+            public StoreInventoryStatsBuilder totalAvailableQuantity(Integer totalAvailableQuantity) {
+<span class="fc" id="L313">                this.totalAvailableQuantity = totalAvailableQuantity;</span>
+<span class="fc" id="L314">                return this;</span>
+            }
+            
+            public StoreInventoryStats build() {
+<span class="fc" id="L318">                return new StoreInventoryStats(storeId, totalProducts, productsWithStock, </span>
+                                             productsWithoutStock, totalQuantity, 
+                                             totalReservedQuantity, totalAvailableQuantity);
+            }
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

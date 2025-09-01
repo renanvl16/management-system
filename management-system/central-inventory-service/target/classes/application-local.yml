@@ -1,0 +1,41 @@
+spring:
+  # Database Configuration PostgreSQL para desenvolvimento local
+  datasource:
+    url: jdbc:postgresql://postgres:5432/inventory_db
+    driver-class-name: org.postgresql.Driver
+    username: inventory_user
+    password: inventory_password
+    hikari:
+      maximum-pool-size: 5
+      minimum-idle: 1
+      connection-timeout: 30000
+    
+  # JPA Configuration para PostgreSQL
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+      
+  # Kafka Configuration para desenvolvimento local
+  kafka:
+    bootstrap-servers: localhost:9092
+    
+  # Redis Configuration para desenvolvimento local
+  data:
+    redis:
+      host: ${REDIS_HOST:redis}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:inventorypass123}
+      timeout: 2000ms
+
+# Logging Configuration para desenvolvimento
+logging:
+  level:
+    com.inventory.management.central: DEBUG
+    org.springframework.kafka: INFO
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE

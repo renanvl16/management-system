@@ -1,0 +1,6 @@
+-- Dados iniciais para testes do Store Service
+
+INSERT INTO store (id, name, location) VALUES ('STORE-001', 'Loja Central', 'São Paulo');
+
+INSERT INTO product (id, sku, name, description, price, quantity, reserved_quantity, available_quantity, active, created_at, updated_at, store_id)
+VALUES ('550e8400-e29b-41d4-a716-446655440001', 'NOTEBOOK-001', 'Notebook Dell Inspiron 15', 'Notebook Dell com 8GB RAM e SSD 256GB', 2499.99, 10, 2, 8, true, '2024-01-15T10:30:00', '2024-01-15T14:20:00', 'STORE-001');

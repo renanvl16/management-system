@@ -1,0 +1,206 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>InventoryEvent.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Central Inventory Service</a> &gt; <a href="index.source.html" class="el_package">com.inventory.management.central.domain.model</a> &gt; <span class="el_source">InventoryEvent.java</span></div><h1>InventoryEvent.java</h1><pre class="source lang-java linenums">package com.inventory.management.central.domain.model;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
+
+import java.time.LocalDateTime;
+import java.util.UUID;
+
+/**
+ * Evento de inventário recebido das lojas via Kafka.
+ * 
+ * Representa um evento de mudança no inventário de uma loja específica,
+ * usado para sincronização em tempo real entre as lojas e o serviço central.
+ * 
+ * @author Sistema de Gerenciamento de Inventário
+ * @version 1.0.0
+ * @since 1.0.0
+ */
+@Getter
+<span class="fc" id="L25">@Setter</span>
+<span class="fc" id="L26">@Builder</span>
+<span class="fc" id="L27">@NoArgsConstructor</span>
+<span class="fc" id="L28">@AllArgsConstructor</span>
+<span class="pc bpc" id="L29" title="6 of 14 branches missed.">@EqualsAndHashCode(onlyExplicitlyIncluded = true)</span>
+<span class="fc" id="L30">@ToString(includeFieldNames = true)</span>
+public class InventoryEvent {
+    
+    /**
+     * Identificador único do evento.
+     */
+    @EqualsAndHashCode.Include
+<span class="fc" id="L37">    private UUID eventId;</span>
+    
+    /**
+     * SKU do produto afetado.
+     */
+<span class="fc" id="L42">    private String productSku;</span>
+    
+    /**
+     * Identificador da loja origem do evento.
+     */
+<span class="fc" id="L47">    private String storeId;</span>
+    
+    /**
+     * Tipo de operação realizada.
+     */
+<span class="fc" id="L52">    private EventType eventType;</span>
+    
+    /**
+     * Quantidade anterior antes da operação.
+     */
+<span class="fc" id="L57">    private Integer previousQuantity;</span>
+    
+    /**
+     * Nova quantidade após a operação.
+     */
+<span class="fc" id="L62">    private Integer newQuantity;</span>
+    
+    /**
+     * Quantidade reservada após a operação.
+     */
+<span class="fc" id="L67">    private Integer reservedQuantity;</span>
+    
+    /**
+     * Data e hora do evento.
+     */
+<span class="fc" id="L72">    private LocalDateTime timestamp;</span>
+    
+    /**
+     * Informações adicionais sobre o evento.
+     */
+<span class="fc" id="L77">    private String details;</span>
+    
+    /**
+     * Status do processamento do evento.
+     */
+<span class="fc" id="L82">    private ProcessingStatus processingStatus;</span>
+    
+    /**
+     * Data de processamento do evento.
+     */
+<span class="fc" id="L87">    private LocalDateTime processedAt;</span>
+    
+    /**
+     * Mensagem de erro em caso de falha no processamento.
+     */
+<span class="fc" id="L92">    private String errorMessage;</span>
+    
+    /**
+     * Tipos de eventos de inventário suportados.
+     */
+<span class="fc" id="L97">    public enum EventType {</span>
+        /**
+         * Reserva de quantidade.
+         */
+<span class="fc" id="L101">        RESERVE,</span>
+        
+        /**
+         * Confirmação de venda.
+         */
+<span class="fc" id="L106">        COMMIT,</span>
+        
+        /**
+         * Cancelamento de reserva.
+         */
+<span class="fc" id="L111">        CANCEL,</span>
+        
+        /**
+         * Atualização manual de estoque.
+         */
+<span class="fc" id="L116">        UPDATE,</span>
+        
+        /**
+         * Reabastecimento de estoque.
+         */
+<span class="fc" id="L121">        RESTOCK</span>
+    }
+    
+    /**
+     * Status de processamento do evento.
+     */
+<span class="fc" id="L127">    public enum ProcessingStatus {</span>
+        /**
+         * Evento recebido, aguardando processamento.
+         */
+<span class="fc" id="L131">        PENDING,</span>
+        
+        /**
+         * Evento processado com sucesso.
+         */
+<span class="fc" id="L136">        PROCESSED,</span>
+        
+        /**
+         * Falha no processamento do evento.
+         */
+<span class="fc" id="L141">        FAILED,</span>
+        
+        /**
+         * Evento ignorado (duplicado ou inválido).
+         */
+<span class="fc" id="L146">        IGNORED</span>
+    }
+    
+    /**
+     * Calcula a diferença de quantidade (nova - anterior).
+     * 
+     * @return diferença de quantidade
+     */
+    public Integer getQuantityDifference() {
+<span class="fc bfc" id="L155" title="All 4 branches covered.">        if (newQuantity == null || previousQuantity == null) {</span>
+<span class="fc" id="L156">            return 0;</span>
+        }
+<span class="fc" id="L158">        return newQuantity - previousQuantity;</span>
+    }
+    
+    /**
+     * Marca o evento como processado com sucesso.
+     */
+    public void markAsProcessed() {
+<span class="fc" id="L165">        this.processingStatus = ProcessingStatus.PROCESSED;</span>
+<span class="fc" id="L166">        this.processedAt = LocalDateTime.now();</span>
+<span class="fc" id="L167">        this.errorMessage = null;</span>
+<span class="fc" id="L168">    }</span>
+    
+    /**
+     * Marca o evento como falha no processamento.
+     * 
+     * @param errorMessage mensagem de erro
+     */
+    public void markAsFailed(String errorMessage) {
+<span class="fc" id="L176">        this.processingStatus = ProcessingStatus.FAILED;</span>
+<span class="fc" id="L177">        this.processedAt = LocalDateTime.now();</span>
+<span class="fc" id="L178">        this.errorMessage = errorMessage;</span>
+<span class="fc" id="L179">    }</span>
+    
+    /**
+     * Marca o evento como ignorado.
+     * 
+     * @param reason motivo por ter sido ignorado
+     */
+    public void markAsIgnored(String reason) {
+<span class="fc" id="L187">        this.processingStatus = ProcessingStatus.IGNORED;</span>
+<span class="fc" id="L188">        this.processedAt = LocalDateTime.now();</span>
+<span class="fc" id="L189">        this.errorMessage = reason;</span>
+<span class="fc" id="L190">    }</span>
+    
+    /**
+     * Verifica se o evento é válido para processamento.
+     * 
+     * @return true se é válido
+     */
+    public boolean isValid() {
+<span class="fc bfc" id="L198" title="All 4 branches covered.">        return eventId != null &amp;&amp;</span>
+<span class="fc bfc" id="L199" title="All 4 branches covered.">               productSku != null &amp;&amp; !productSku.trim().isEmpty() &amp;&amp;</span>
+<span class="pc bpc" id="L200" title="1 of 6 branches missed.">               storeId != null &amp;&amp; !storeId.trim().isEmpty() &amp;&amp;</span>
+               eventType != null &amp;&amp;
+<span class="pc bpc" id="L202" title="2 of 4 branches missed.">               newQuantity != null &amp;&amp; newQuantity &gt;= 0 &amp;&amp;</span>
+               timestamp != null;
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>
