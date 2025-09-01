@@ -47,7 +47,7 @@ public class RealContainersTestConfiguration {
     // PostgreSQL Container - usando a mesma imagem do docker-compose com registry
     @Container
     static PostgreSQLContainer<?> postgreSQLContainer = new PostgreSQLContainer<>(
-            DockerImageName.parse("nexus.elocloud.ninja/postgres:15-alpine")
+            DockerImageName.parse("postgres:15-alpine")
                 .asCompatibleSubstituteFor("postgres"))
             .withDatabaseName("inventorydb")
             .withUsername("inventory")
@@ -60,7 +60,7 @@ public class RealContainersTestConfiguration {
     // Redis Container - usando a mesma imagem do docker-compose com registry
     @Container
     static GenericContainer<?> redisContainer = new GenericContainer<>(
-            DockerImageName.parse("nexus.elocloud.ninja/redis:7.2-alpine")
+            DockerImageName.parse("redis:7.2-alpine")
                 .asCompatibleSubstituteFor("redis"))
             .withExposedPorts(6379)
             .withCommand("redis-server", "--requirepass", "inventorypass123", "--appendonly", "yes")
@@ -71,7 +71,7 @@ public class RealContainersTestConfiguration {
     // Kafka Container - usando a mesma imagem do docker-compose com registry
     @Container
     static KafkaContainer kafkaContainer = new KafkaContainer(
-            DockerImageName.parse("nexus.elocloud.ninja/confluentinc/cp-kafka:7.4.0")
+            DockerImageName.parse("confluentinc/cp-kafka:7.4.0")
                 .asCompatibleSubstituteFor("confluentinc/cp-kafka"))
             .withNetwork(network)
             .withNetworkAliases("kafka")
@@ -143,19 +143,19 @@ public class RealContainersTestConfiguration {
             logger.info("=== INICIANDO CONTAINERS PARA TESTES INTEGRADOS ===");
             
             if (!postgreSQLContainer.isRunning()) {
-                logger.info("🐘 Iniciando container PostgreSQL (nexus.elocloud.ninja/postgres:15-alpine)...");
+                logger.info("🐘 Iniciando container PostgreSQL (postgres:15-alpine)...");
                 postgreSQLContainer.start();
                 logger.info("✅ PostgreSQL iniciado: {}", postgreSQLContainer.getJdbcUrl());
             }
 
             if (!redisContainer.isRunning()) {
-                logger.info("🔴 Iniciando container Redis (nexus.elocloud.ninja/redis:7.2-alpine)...");
+                logger.info("🔴 Iniciando container Redis (redis:7.2-alpine)...");
                 redisContainer.start();
                 logger.info("✅ Redis iniciado: {}:{}", redisContainer.getHost(), redisContainer.getMappedPort(6379));
             }
 
             if (!kafkaContainer.isRunning()) {
-                logger.info("📨 Iniciando container Kafka (nexus.elocloud.ninja/confluentinc/cp-kafka:7.4.0)...");
+                logger.info("📨 Iniciando container Kafka (confluentinc/cp-kafka:7.4.0)...");
                 kafkaContainer.start();
                 logger.info("✅ Kafka iniciado: {}", kafkaContainer.getBootstrapServers());
             }
