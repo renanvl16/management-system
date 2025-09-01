@@ -4,7 +4,7 @@ services:
   # ===============================
   
   zookeeper:
-    image: nexus.elocloud.ninja/confluentinc/cp-zookeeper:7.4.0
+    image: confluentinc/cp-zookeeper:7.4.0
     hostname: zookeeper
     container_name: inventory-zookeeper
     ports:
@@ -25,7 +25,7 @@ services:
       retries: 3
 
   kafka:
-    image: nexus.elocloud.ninja/confluentinc/cp-kafka:7.4.0
+    image: confluentinc/cp-kafka:7.4.0
     hostname: kafka
     container_name: inventory-kafka
     depends_on:
@@ -59,7 +59,7 @@ services:
       start_period: 60s
 
   redis:
-    image: nexus.elocloud.ninja/redis:7.2-alpine
+    image: redis:7.2-alpine
     container_name: inventory-redis
     ports:
       - "6379:6379"
@@ -76,7 +76,7 @@ services:
       retries: 3
 
   postgres:
-    image: nexus.elocloud.ninja/postgres:15-alpine
+    image: postgres:15-alpine
     container_name: inventory-postgres
     ports:
       - "5432:5432"
@@ -102,7 +102,7 @@ services:
   # ===============================
 
   prometheus:
-    image: nexus.elocloud.ninja/prom/prometheus:v2.47.0
+    image: prom/prometheus:v2.47.0
     container_name: inventory-prometheus
     ports:
       - "9090:9090"
@@ -126,7 +126,7 @@ services:
       retries: 3
 
   grafana:
-    image: nexus.elocloud.ninja/grafana/grafana:10.1.0
+    image: grafana/grafana:10.1.0
     container_name: inventory-grafana
     depends_on:
       - prometheus
